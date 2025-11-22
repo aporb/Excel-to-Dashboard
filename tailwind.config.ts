@@ -11,7 +11,11 @@ const config: Config = {
     extend: {
       colors: {
         background: "oklch(var(--background))",
-        foreground: "oklch(var(--foreground))",
+        foreground: {
+          DEFAULT: "oklch(var(--foreground))",
+          muted: "oklch(var(--foreground-muted))",
+          subtle: "oklch(var(--foreground-subtle))",
+        },
         card: {
           DEFAULT: "oklch(var(--card))",
           foreground: "oklch(var(--card-foreground))",
@@ -41,7 +45,11 @@ const config: Config = {
           DEFAULT: "oklch(var(--destructive))",
           foreground: "oklch(var(--destructive-foreground))",
         },
-        border: "oklch(var(--border))",
+        border: {
+          DEFAULT: "oklch(var(--border))",
+          subtle: "oklch(var(--border-subtle))",
+          strong: "oklch(var(--border-strong))",
+        },
         input: "oklch(var(--input))",
         ring: "oklch(var(--ring))",
         chart: {
