@@ -3,6 +3,7 @@
 import React from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { CustomTooltip } from './CustomTooltip';
 
 interface BarChartWidgetProps {
   data: Record<string, any>[];
@@ -12,7 +13,7 @@ interface BarChartWidgetProps {
   color?: string;
 }
 
-export function BarChartWidget({ data, xKey, yKey, title, color = '#10b981' }: BarChartWidgetProps) {
+export function BarChartWidget({ data, xKey, yKey, title, color = 'hsl(var(--chart-3))' }: BarChartWidgetProps) {
   if (!data || data.length === 0) {
     return (
       <Card>
@@ -47,12 +48,7 @@ export function BarChartWidget({ data, xKey, yKey, title, color = '#10b981' }: B
               style={{ fontSize: '12px' }}
             />
             <Tooltip
-              contentStyle={{
-                backgroundColor: 'hsl(var(--card))',
-                border: '1px solid hsl(var(--border))',
-                borderRadius: '8px',
-                color: 'hsl(var(--foreground))'
-              }}
+              content={<CustomTooltip />}
               cursor={{ fill: `${color}20` }}
             />
             <Legend />

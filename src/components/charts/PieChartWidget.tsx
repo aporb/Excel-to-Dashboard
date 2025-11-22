@@ -3,6 +3,7 @@
 import React from 'react';
 import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { CustomTooltip } from './CustomTooltip';
 
 interface PieChartWidgetProps {
   data: Record<string, any>[];
@@ -12,7 +13,13 @@ interface PieChartWidgetProps {
   colors?: string[];
 }
 
-const DEFAULT_COLORS = ['#3388ff', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#14b8a6', '#f97316'];
+const DEFAULT_COLORS = [
+  'hsl(var(--chart-1))',
+  'hsl(var(--chart-2))',
+  'hsl(var(--chart-3))',
+  'hsl(var(--chart-4))',
+  'hsl(var(--chart-5))',
+];
 
 export function PieChartWidget({ 
   data, 
@@ -65,15 +72,7 @@ export function PieChartWidget({
                 <Cell key={`cell-${index}`} fill={colors[index % colors.length]} />
               ))}
             </Pie>
-            <Tooltip
-              contentStyle={{
-                backgroundColor: 'hsl(var(--card))',
-                border: '1px solid hsl(var(--border))',
-                borderRadius: '8px',
-                color: 'hsl(var(--foreground))'
-              }}
-              formatter={(value) => value.toLocaleString()}
-            />
+            <Tooltip content={<CustomTooltip />} />
             <Legend />
           </PieChart>
         </ResponsiveContainer>

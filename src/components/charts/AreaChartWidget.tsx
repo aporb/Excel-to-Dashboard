@@ -3,6 +3,7 @@
 import React from 'react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { CustomTooltip } from './CustomTooltip';
 
 interface AreaChartWidgetProps {
   data: Record<string, any>[];
@@ -12,7 +13,7 @@ interface AreaChartWidgetProps {
   color?: string;
 }
 
-export function AreaChartWidget({ data, xKey, yKey, title, color = '#f59e0b' }: AreaChartWidgetProps) {
+export function AreaChartWidget({ data, xKey, yKey, title, color = 'hsl(var(--chart-4))' }: AreaChartWidgetProps) {
   if (!data || data.length === 0) {
     return (
       <Card>
@@ -53,12 +54,7 @@ export function AreaChartWidget({ data, xKey, yKey, title, color = '#f59e0b' }: 
               style={{ fontSize: '12px' }}
             />
             <Tooltip
-              contentStyle={{
-                backgroundColor: 'hsl(var(--card))',
-                border: '1px solid hsl(var(--border))',
-                borderRadius: '8px',
-                color: 'hsl(var(--foreground))'
-              }}
+              content={<CustomTooltip />}
               cursor={{ stroke: color, strokeWidth: 2 }}
             />
             <Legend />

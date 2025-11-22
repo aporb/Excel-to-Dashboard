@@ -3,6 +3,7 @@
 import React from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { CustomTooltip } from './CustomTooltip';
 
 interface LineChartWidgetProps {
   data: Record<string, any>[];
@@ -12,7 +13,7 @@ interface LineChartWidgetProps {
   color?: string;
 }
 
-export function LineChartWidget({ data, xKey, yKey, title, color = '#3388ff' }: LineChartWidgetProps) {
+export function LineChartWidget({ data, xKey, yKey, title, color = 'hsl(var(--chart-1))' }: LineChartWidgetProps) {
   if (!data || data.length === 0) {
     return (
       <Card>
@@ -47,12 +48,7 @@ export function LineChartWidget({ data, xKey, yKey, title, color = '#3388ff' }: 
               style={{ fontSize: '12px' }}
             />
             <Tooltip
-              contentStyle={{
-                backgroundColor: 'hsl(var(--card))',
-                border: '1px solid hsl(var(--border))',
-                borderRadius: '8px',
-                color: 'hsl(var(--foreground))'
-              }}
+              content={<CustomTooltip />}
               cursor={{ stroke: color, strokeWidth: 2 }}
             />
             <Legend />
