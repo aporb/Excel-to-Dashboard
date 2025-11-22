@@ -304,7 +304,7 @@ export default function DashboardPage() {
 
             <div className="container mx-auto px-4 py-8 space-y-8">
                 {/* Upload Section */}
-                <Card>
+                <Card variant="glass" hoverable>
                     <CardHeader>
                         <CardTitle className="flex items-center gap-2">
                             <Database className="h-5 w-5" />
@@ -345,7 +345,7 @@ export default function DashboardPage() {
 
                 {/* Mapping Section */}
                 {columns.length > 0 && (
-                    <Card>
+                    <Card variant="glass" hoverable>
                         <CardHeader>
                             <CardTitle className="flex items-center gap-2">
                                 <TrendingUp className="h-5 w-5" />
@@ -398,7 +398,7 @@ export default function DashboardPage() {
 
                 {/* Dashboard Section */}
                 {processedData.length > 0 && (
-                    <Card>
+                    <Card variant="glass" hoverable>
                         <CardHeader>
                             <CardTitle className="flex items-center gap-2">
                                 <BarChart3 className="h-5 w-5" />
@@ -420,7 +420,7 @@ export default function DashboardPage() {
                                 )}
 
                                 {/* KPI Cards */}
-                                <Card>
+                                <Card variant="glass" hoverable>
                                     <CardHeader className="pb-3">
                                         <CardTitle className="text-sm font-medium">Total Records</CardTitle>
                                     </CardHeader>
@@ -429,7 +429,7 @@ export default function DashboardPage() {
                                     </CardContent>
                                 </Card>
 
-                                <Card>
+                                <Card variant="glass" hoverable>
                                     <CardHeader className="pb-3">
                                         <CardTitle className="text-sm font-medium">Columns</CardTitle>
                                     </CardHeader>
@@ -445,7 +445,7 @@ export default function DashboardPage() {
                 {/* Alerts Section */}
                 {processedData.length > 0 && (
                     <>
-                        <Card>
+                        <Card variant="glass" hoverable>
                             <CardHeader>
                                 <CardTitle>Step 4: Configure Alerts</CardTitle>
                                 <CardDescription>

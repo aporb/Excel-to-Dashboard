@@ -1,11 +1,19 @@
+"use client"
+
 import * as React from "react"
 import { Slot } from "@radix-ui/react-slot"
 import { cva, type VariantProps } from "class-variance-authority"
 
 import { cn } from "@/lib/utils"
 
+interface Ripple {
+  x: number
+  y: number
+  id: number
+}
+
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
+  "relative inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 overflow-hidden",
   {
     variants: {
       variant: {
@@ -66,8 +74,31 @@ export interface ButtonProps
 }
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant, size, asChild = false, loading = false, children, disabled, ...props }, ref) => {
+  ({ className, variant, size, asChild = false, loading = false, children, disabled, onClick, ...props }, ref) => {
+    const [ripples, setRipples] = React.useState<Ripple[]>([])
     const Comp = asChild ? Slot : "button"
+
+    const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+      if (asChild || disabled || loading) {
+        onClick?.(e)
+        return
+      }
+
+      const button = e.currentTarget
+      const rect = button.getBoundingClientRect()
+      const ripple: Ripple = {
+        x: e.clientX - rect.left,
+        y: e.clientY - rect.top,
+        id: Date.now()
+      }
+
+      setRipples((prev) => [...prev, ripple])
+      onClick?.(e)
+
+      setTimeout(() => {
+        setRipples((prev) => prev.filter((r) => r.id !== ripple.id))
+      }, 600)
+    }
 
     return (
       <Comp
@@ -77,8 +108,21 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         )}
         ref={ref}
         disabled={disabled || loading}
+        onClick={handleClick}
         {...props}
       >
+        {!asChild && ripples.map((ripple) => (
+          <span
+            key={ripple.id}
+            className="absolute bg-white/30 dark:bg-white/20 rounded-full animate-ripple pointer-events-none"
+            style={{
+              left: ripple.x - 10,
+              top: ripple.y - 10,
+              width: 20,
+              height: 20,
+            }}
+          />
+        ))}
         {!asChild && loading && (
           <div className="absolute inset-0 flex items-center justify-center">
             <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
