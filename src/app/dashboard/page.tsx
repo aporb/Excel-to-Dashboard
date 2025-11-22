@@ -285,11 +285,11 @@ export default function DashboardPage() {
             <header className="border-b">
                 <div className="container mx-auto px-4 py-4 flex justify-between items-center">
                     <div className="flex items-center gap-4">
-                        <Button variant="ghost" size="icon" asChild>
-                            <Link href="/">
+                        <Link href="/">
+                            <Button variant="ghost" size="icon">
                                 <Home className="h-5 w-5" />
-                            </Link>
-                        </Button>
+                            </Button>
+                        </Link>
                         <div className="flex items-center gap-2">
                             <BarChart3 className="h-6 w-6 text-primary" />
                             <span className="text-xl font-bold">Dashboard</span>

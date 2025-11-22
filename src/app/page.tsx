@@ -34,14 +34,17 @@ export default function Home() {
           </div>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button asChild size="lg" className="text-lg">
-              <Link href="/dashboard">
-                Get Started <ArrowRight className="ml-2 h-5 w-5" />
-              </Link>
-            </Button>
-            <Button asChild variant="outline" size="lg" className="text-lg">
-              <a href="#features">Learn More</a>
-            </Button>
+            <Link href="/dashboard">
+              <Button size="lg" className="text-lg flex items-center gap-2">
+                Get Started
+                <ArrowRight className="h-5 w-5" />
+              </Button>
+            </Link>
+            <a href="#features">
+              <Button variant="outline" size="lg" className="text-lg">
+                Learn More
+              </Button>
+            </a>
           </div>
         </div>
       </div>
