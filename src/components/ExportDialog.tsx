@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from 'react';
-import { Download, FileText, Image, File } from 'lucide-react';
+import { Download, FileText, Image, File, FileJson, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -13,14 +13,21 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { toast } from 'sonner';
+import {
+  exportElementAsPNG,
+  exportDashboardAsPNG,
+  exportDashboardAsPDF,
+  isExportSupported,
+} from '@/lib/chart-export';
 
 interface ExportDialogProps {
   data: Record<string, any>[];
   columns: string[];
   filename?: string;
+  dashboardElementId?: string;
 }
 
-export function ExportDialog({ data, columns, filename = 'export' }: ExportDialogProps) {
+export function ExportDialog({ data, columns, filename = 'export', dashboardElementId }: ExportDialogProps) {
   const [open, setOpen] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
 
@@ -160,6 +167,56 @@ export function ExportDialog({ data, columns, filename = 'export' }: ExportDialo
     }
   };
 
+  /**
+   * Export dashboard as PNG
+   */
+  const handleExportDashboardPNG = async () => {
+    if (!dashboardElementId) {
+      toast.error('Dashboard element not found');
+      return;
+    }
+
+    try {
+      setIsExporting(true);
+      toast.loading('Generating PNG...');
+      await exportDashboardAsPNG(dashboardElementId, filename);
+      toast.success('Dashboard exported as PNG');
+      setOpen(false);
+    } catch (error) {
+      console.error('Dashboard PNG export error:', error);
+      toast.error(error instanceof Error ? error.message : 'Failed to export dashboard as PNG');
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  /**
+   * Export dashboard as PDF
+   */
+  const handleExportDashboardPDF = async () => {
+    if (!dashboardElementId) {
+      toast.error('Dashboard element not found');
+      return;
+    }
+
+    try {
+      setIsExporting(true);
+      toast.loading('Generating PDF...');
+      await exportDashboardAsPDF(dashboardElementId, filename, {
+        title: `Dashboard Export - ${new Date().toLocaleDateString()}`,
+        author: 'Excel-to-Dashboard',
+        includeMetadata: true,
+      });
+      toast.success('Dashboard exported as PDF');
+      setOpen(false);
+    } catch (error) {
+      console.error('Dashboard PDF export error:', error);
+      toast.error(error instanceof Error ? error.message : 'Failed to export dashboard as PDF');
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
@@ -221,6 +278,40 @@ export function ExportDialog({ data, columns, filename = 'export' }: ExportDialo
               </div>
             </div>
           </button>
+
+          {/* PNG Export */}
+          {dashboardElementId && isExportSupported() && (
+            <button
+              onClick={handleExportDashboardPNG}
+              disabled={isExporting}
+              className="flex items-start gap-3 p-3 rounded-lg border border-border hover:bg-muted transition-colors text-left disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <Image className="h-5 w-5 text-orange-500 mt-0.5 flex-shrink-0" />
+              <div>
+                <div className="font-semibold">PNG (Image)</div>
+                <div className="text-sm text-muted-foreground">
+                  Capture dashboard as high-quality image
+                </div>
+              </div>
+            </button>
+          )}
+
+          {/* PDF Export */}
+          {dashboardElementId && isExportSupported() && (
+            <button
+              onClick={handleExportDashboardPDF}
+              disabled={isExporting}
+              className="flex items-start gap-3 p-3 rounded-lg border border-border hover:bg-muted transition-colors text-left disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <FileText className="h-5 w-5 text-red-500 mt-0.5 flex-shrink-0" />
+              <div>
+                <div className="font-semibold">PDF (Document)</div>
+                <div className="text-sm text-muted-foreground">
+                  Export dashboard with metadata and formatting
+                </div>
+              </div>
+            </button>
+          )}
         </div>
 
         <DialogFooter>

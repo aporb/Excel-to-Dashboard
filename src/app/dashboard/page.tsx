@@ -31,7 +31,8 @@ import { sessionManager, DashboardSession } from '@/lib/session-manager';
 import { DataValidator } from '@/lib/data-schemas';
 import { ChartIntelligence, ChartType } from '@/lib/chart-intelligence';
 import { KPICalculator } from '@/lib/kpi-calculator';
-import { BarChart3, Sparkles, Loader2, Home, Database, TrendingUp } from 'lucide-react';
+import { notificationManager } from '@/lib/notification-manager';
+import { BarChart3, Sparkles, Loader2, Home, Database, TrendingUp, Bell } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function DashboardPage() {
@@ -231,6 +232,17 @@ export default function DashboardPage() {
         if (processedData.length > 0) {
             const results = runAlerts(processedData, newRules);
             setAlertResults(results);
+
+            // Send notification if alert is triggered
+            results.forEach((result) => {
+                if (result.triggered) {
+                    notificationManager.notifyAlert(
+                        rule.metric,
+                        `Alert triggered: ${rule.metric} ${rule.condition} ${rule.threshold}`,
+                        'warning'
+                    );
+                }
+            });
         }
     };
 

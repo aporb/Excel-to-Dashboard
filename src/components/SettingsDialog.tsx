@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { Settings, Moon, Sun, Palette } from "lucide-react"
+import { Settings, Moon, Sun, Palette, Bell, Volume2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -17,12 +17,16 @@ import { Label } from "@/components/ui/label"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { toast } from "sonner"
 import { useTheme } from "next-themes"
+import { notificationManager, NotificationManager } from "@/lib/notification-manager"
 
 export function SettingsDialog() {
   const [apiKey, setApiKey] = React.useState("")
   const [open, setOpen] = React.useState(false)
   const { theme, setTheme } = useTheme()
   const [mounted, setMounted] = React.useState(false)
+  const [notificationsEnabled, setNotificationsEnabled] = React.useState(false)
+  const [notificationSound, setNotificationSound] = React.useState(true)
+  const [notificationPermission, setNotificationPermission] = React.useState<NotificationPermission>("default")
 
   React.useEffect(() => {
     setMounted(true)
@@ -30,6 +34,14 @@ export function SettingsDialog() {
     const savedKey = localStorage.getItem("openai_api_key")
     if (savedKey) {
       setApiKey(savedKey)
+    }
+
+    // Load notification preferences
+    if (NotificationManager.isSupported()) {
+      const prefs = notificationManager.getPreferences()
+      setNotificationsEnabled(prefs.enabled)
+      setNotificationSound(prefs.sound)
+      setNotificationPermission(notificationManager.getPermissionStatus())
     }
   }, [])
 
@@ -56,6 +68,38 @@ export function SettingsDialog() {
     toast.success(`Theme changed to ${newTheme}`)
   }
 
+  const handleNotificationToggle = async () => {
+    if (!NotificationManager.isSupported()) {
+      toast.error("Notifications not supported in your browser")
+      return
+    }
+
+    if (!notificationsEnabled) {
+      // Enable notifications - request permission
+      const granted = await notificationManager.requestPermission()
+      if (granted) {
+        notificationManager.enable()
+        setNotificationsEnabled(true)
+        setNotificationPermission("granted")
+        toast.success("Notifications enabled!")
+      } else {
+        toast.error("Notification permission denied")
+      }
+    } else {
+      // Disable notifications
+      notificationManager.disable()
+      setNotificationsEnabled(false)
+      toast.info("Notifications disabled")
+    }
+  }
+
+  const handleNotificationSoundToggle = () => {
+    const newValue = !notificationSound
+    setNotificationSound(newValue)
+    notificationManager.setPreferences({ sound: newValue })
+    toast.success(`Notification sound ${newValue ? "enabled" : "disabled"}`)
+  }
+
   if (!mounted) return null
 
   return (
@@ -75,9 +119,10 @@ export function SettingsDialog() {
         </DialogHeader>
 
         <Tabs defaultValue="api" className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="api">API Configuration</TabsTrigger>
             <TabsTrigger value="theme">Theme & Display</TabsTrigger>
+            <TabsTrigger value="notifications">Notifications</TabsTrigger>
           </TabsList>
 
           {/* API Configuration Tab */}
@@ -158,6 +203,75 @@ export function SettingsDialog() {
                   <p>✓ Dark mode support</p>
                 </div>
               </div>
+            </div>
+          </TabsContent>
+
+          {/* Notifications Tab */}
+          <TabsContent value="notifications" className="space-y-4">
+            <div className="space-y-4 py-4">
+              {!NotificationManager.isSupported() ? (
+                <div className="p-3 rounded-lg bg-muted text-sm">
+                  <p className="text-muted-foreground">
+                    Notifications are not supported in your browser. Please use a modern browser like Chrome, Firefox, or Edge.
+                  </p>
+                </div>
+              ) : (
+                <>
+                  {/* Enable Notifications */}
+                  <div className="flex items-center justify-between p-3 rounded-lg border border-border">
+                    <div className="flex items-center gap-3">
+                      <Bell className="h-5 w-5 text-primary" />
+                      <div>
+                        <Label className="text-base font-semibold">Browser Notifications</Label>
+                        <p className="text-sm text-muted-foreground">
+                          Get notified when alerts are triggered
+                        </p>
+                      </div>
+                    </div>
+                    <Button
+                      variant={notificationsEnabled ? "default" : "outline"}
+                      size="sm"
+                      onClick={handleNotificationToggle}
+                    >
+                      {notificationsEnabled ? "Enabled" : "Enable"}
+                    </Button>
+                  </div>
+
+                  {/* Notification Sound */}
+                  {notificationsEnabled && (
+                    <div className="flex items-center justify-between p-3 rounded-lg border border-border">
+                      <div className="flex items-center gap-3">
+                        <Volume2 className="h-5 w-5 text-primary" />
+                        <div>
+                          <Label className="text-base font-semibold">Notification Sound</Label>
+                          <p className="text-sm text-muted-foreground">
+                            Play sound when alerts trigger
+                          </p>
+                        </div>
+                      </div>
+                      <Button
+                        variant={notificationSound ? "default" : "outline"}
+                        size="sm"
+                        onClick={handleNotificationSoundToggle}
+                      >
+                        {notificationSound ? "On" : "Off"}
+                      </Button>
+                    </div>
+                  )}
+
+                  {/* Permission Status */}
+                  <div className="p-3 rounded-lg bg-muted">
+                    <p className="text-sm font-medium">Permission Status</p>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      {notificationPermission === "granted"
+                        ? "✓ Notifications are enabled"
+                        : notificationPermission === "denied"
+                        ? "✗ Notifications are blocked by your browser"
+                        : "○ Notifications permission not yet requested"}
+                    </p>
+                  </div>
+                </>
+              )}
             </div>
           </TabsContent>
         </Tabs>
