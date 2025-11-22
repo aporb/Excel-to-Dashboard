@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Step 3 - Data Visualization</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            font-family: 'Geist', system-ui, -apple-system, sans-serif !important;
+        }
+        
+        :root {
+            --primary: #3388ff;
+            --primary-rgb: 51, 136, 255;
+            --background: #ffffff;
+            --foreground: #1a1a1a;
+            --border: #e8e8e8;
+            --muted: #f5f5f5;
+            --card: #ffffff;
+            --chart-1: #ff6b35;
+            --chart-2: #10b981;
+            --chart-3: #1e3a8a;
+            --chart-4: #f59e0b;
+            --chart-5: #f97316;
+        }
+        
+        body {
+            background: #f9fafb;
+            color: var(--foreground);
+        }
+        
+        .header {
+            background: white;
+            border-bottom: 1px solid var(--border);
+            padding: 16px 0;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+        
+        .card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 32px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+        
+        .step-indicator {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 32px;
+        }
+        
+        .step-badge {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--muted);
+            color: var(--foreground);
+            font-weight: 600;
+            font-size: 14px;
+        }
+        
+        .step-badge.active {
+            background: var(--primary);
+            color: white;
+        }
+        
+        .step-badge.completed {
+            background: #10b981;
+            color: white;
+        }
+        
+        .step-line {
+            flex: 1;
+            height: 2px;
+            background: var(--border);
+            margin-top: 19px;
+        }
+        
+        .step-line.active {
+            background: var(--primary);
+        }
+        
+        .step-line.completed {
+            background: #10b981;
+        }
+        
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 24px;
+            margin-bottom: 32px;
+        }
+        
+        .chart-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 24px;
+            grid-column: span 2;
+        }
+        
+        .kpi-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        
+        .kpi-label {
+            font-size: 14px;
+            color: #999;
+            font-weight: 500;
+            margin-bottom: 8px;
+        }
+        
+        .kpi-value {
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--foreground);
+            margin-bottom: 8px;
+        }
+        
+        .kpi-change {
+            font-size: 12px;
+            color: #10b981;
+            font-weight: 600;
+        }
+        
+        .chart-placeholder {
+            width: 100%;
+            height: 300px;
+            background: linear-gradient(135deg, var(--muted) 0%, #f0f0f0 100%);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #999;
+            font-size: 14px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .chart-bars {
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-around;
+            width: 100%;
+            height: 100%;
+            padding: 20px;
+            gap: 8px;
+        }
+        
+        .bar {
+            flex: 1;
+            background: linear-gradient(180deg, var(--primary) 0%, #2563eb 100%);
+            border-radius: 4px 4px 0 0;
+            position: relative;
+            min-height: 20px;
+        }
+        
+        .bar:nth-child(1) { height: 60%; }
+        .bar:nth-child(2) { height: 80%; background: linear-gradient(180deg, var(--chart-2) 0%, #059669 100%); }
+        .bar:nth-child(3) { height: 45%; background: linear-gradient(180deg, var(--chart-4) 0%, #d97706 100%); }
+        .bar:nth-child(4) { height: 90%; background: linear-gradient(180deg, var(--chart-5) 0%, #ea580c 100%); }
+        .bar:nth-child(5) { height: 55%; background: linear-gradient(180deg, var(--primary) 0%, #2563eb 100%); }
+        
+        .chart-title {
+            font-weight: 600;
+            font-size: 16px;
+            margin-bottom: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .chart-menu {
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            padding: 4px;
+            color: #999;
+            transition: color 200ms ease;
+        }
+        
+        .chart-menu:hover {
+            color: var(--foreground);
+        }
+        
+        .primary-btn {
+            background: var(--primary);
+            color: white;
+            padding: 12px 32px;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: all 200ms ease;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .primary-btn:hover {
+            background: #2563eb;
+            box-shadow: 0 4px 12px rgba(51, 136, 255, 0.3);
+            transform: translateY(-2px);
+        }
+        
+        .secondary-btn {
+            background: transparent;
+            color: var(--primary);
+            padding: 12px 32px;
+            border-radius: 8px;
+            font-weight: 600;
+            border: 2px solid var(--primary);
+            transition: all 200ms ease;
+            cursor: pointer;
+            font-size: 14px;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .secondary-btn:hover {
+            background: rgba(51, 136, 255, 0.05);
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 12px;
+            margin-top: 32px;
+        }
+        
+        @media (max-width: 768px) {
+            .chart-card {
+                grid-column: span 1;
+            }
+            
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="container flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <svg class="w-8 h-8" style="color: var(--primary);" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                </svg>
+                <span class="text-xl font-bold">Dashboard</span>
+            </div>
+            <div class="flex items-center gap-2">
+                <button class="p-2 hover:bg-gray-100 rounded-lg transition">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                    </svg>
+                </button>
+                <button class="p-2 hover:bg-gray-100 rounded-lg transition">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 015.646 5.646 9 9 0 0120.354 15.354z"></path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <div class="container py-8">
+        <!-- Step Indicator -->
+        <div class="step-indicator mb-8">
+            <div class="step-badge completed">✓</div>
+            <div class="step-line completed"></div>
+            <div class="step-badge completed">✓</div>
+            <div class="step-line active"></div>
+            <div class="step-badge active">3</div>
+            <div class="step-line"></div>
+            <div class="step-badge">4</div>
+        </div>
+
+        <!-- Card -->
+        <div class="card">
+            <div class="mb-8">
+                <h1 class="text-3xl font-bold mb-2">Step 3: Dashboard Visualization</h1>
+                <p class="text-gray-600">View your data insights and key metrics at a glance.</p>
+            </div>
+
+            <!-- Dashboard Grid -->
+            <div class="dashboard-grid">
+                <!-- Main Chart -->
+                <div class="chart-card">
+                    <div class="chart-title">
+                        <span>Sales over Time</span>
+                        <button class="chart-menu">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"></path>
+                            </svg>
+                        </button>
+                    </div>
+                    <div class="chart-placeholder">
+                        <div class="chart-bars">
+                            <div class="bar"></div>
+                            <div class="bar"></div>
+                            <div class="bar"></div>
+                            <div class="bar"></div>
+                            <div class="bar"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- KPI Cards -->
+                <div class="kpi-card">
+                    <div>
+                        <div class="kpi-label">Total Records</div>
+                        <div class="kpi-value">1,245</div>
+                    </div>
+                    <div class="kpi-change">↑ 12% from last period</div>
+                </div>
+
+                <div class="kpi-card">
+                    <div>
+                        <div class="kpi-label">Total Columns</div>
+                        <div class="kpi-value">8</div>
+                    </div>
+                    <div class="kpi-change">Fully mapped</div>
+                </div>
+
+                <div class="kpi-card">
+                    <div>
+                        <div class="kpi-label">Data Quality</div>
+                        <div class="kpi-value">98%</div>
+                    </div>
+                    <div class="kpi-change">✓ No missing values</div>
+                </div>
+
+                <div class="kpi-card">
+                    <div>
+                        <div class="kpi-label">Last Updated</div>
+                        <div class="kpi-value" style="font-size: 16px;">Just now</div>
+                    </div>
+                    <div class="kpi-change">Auto-refresh enabled</div>
+                </div>
+            </div>
+
+            <!-- Additional Charts Section -->
+            <div style="margin-top: 32px;">
+                <h2 class="text-lg font-semibold mb-4">Additional Insights</h2>
+                <div class="dashboard-grid">
+                    <div class="chart-card">
+                        <div class="chart-title">
+                            <span>Distribution by Region</span>
+                            <button class="chart-menu">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"></path>
+                                </svg>
+                            </button>
+                        </div>
+                        <div class="chart-placeholder">
+                            <div class="chart-bars">
+                                <div class="bar"></div>
+                                <div class="bar"></div>
+                                <div class="bar"></div>
+                                <div class="bar"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="chart-card">
+                        <div class="chart-title">
+                            <span>Product Performance</span>
+                            <button class="chart-menu">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"></path>
+                                </svg>
+                            </button>
+                        </div>
+                        <div class="chart-placeholder">
+                            <div class="chart-bars">
+                                <div class="bar"></div>
+                                <div class="bar"></div>
+                                <div class="bar"></div>
+                                <div class="bar"></div>
+                                <div class="bar"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="action-buttons">
+                <button class="primary-btn">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                    </svg>
+                    Export Dashboard
+                </button>
+                <button class="secondary-btn">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                    </svg>
+                    Customize
+                </button>
+            </div>
+
+            <!-- Info Box -->
+            <div style="background: rgba(51, 136, 255, 0.05); border: 1px solid rgba(51, 136, 255, 0.2); border-radius: 8px; padding: 16px; margin-top: 32px;">
+                <div style="display: flex; gap: 12px;">
+                    <svg class="w-5 h-5" style="color: var(--primary); flex-shrink: 0; margin-top: 2px;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    <div>
+                        <p class="font-semibold text-sm mb-1">Interactive Dashboard</p>
+                        <p class="text-sm text-gray-600">Click on any chart to drill down into details. Use the menu button to change chart types or customize visualization settings.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

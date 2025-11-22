@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Excel-to-Dashboard - Landing Page Design</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            font-family: 'Geist', system-ui, -apple-system, sans-serif !important;
+        }
+        
+        :root {
+            --primary: #3388ff;
+            --primary-rgb: 51, 136, 255;
+            --background: #ffffff;
+            --foreground: #1a1a1a;
+            --border: #e8e8e8;
+            --muted: #f5f5f5;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #ffffff 0%, #f8f9ff 100%);
+            color: var(--foreground);
+        }
+        
+        .hero-gradient {
+            background: linear-gradient(135deg, #ffffff 0%, #f0f4ff 100%);
+        }
+        
+        .primary-btn {
+            background: var(--primary);
+            color: white;
+            padding: 12px 32px;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: all 200ms ease;
+            border: none;
+            cursor: pointer;
+        }
+        
+        .primary-btn:hover {
+            background: #2563eb;
+            box-shadow: 0 4px 12px rgba(51, 136, 255, 0.3);
+            transform: translateY(-2px);
+        }
+        
+        .outline-btn {
+            background: transparent;
+            color: var(--primary);
+            padding: 12px 32px;
+            border-radius: 8px;
+            font-weight: 600;
+            border: 2px solid var(--primary);
+            transition: all 200ms ease;
+            cursor: pointer;
+        }
+        
+        .outline-btn:hover {
+            background: rgba(51, 136, 255, 0.05);
+        }
+        
+        .feature-card {
+            background: white;
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            padding: 32px;
+            transition: all 200ms ease;
+        }
+        
+        .feature-card:hover {
+            border-color: var(--primary);
+            box-shadow: 0 8px 24px rgba(51, 136, 255, 0.1);
+            transform: translateY(-4px);
+        }
+        
+        .icon-box {
+            width: 48px;
+            height: 48px;
+            background: rgba(51, 136, 255, 0.1);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--primary);
+            margin-bottom: 16px;
+        }
+        
+        .header {
+            background: white;
+            border-bottom: 1px solid var(--border);
+            padding: 16px 0;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="container flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <svg class="w-8 h-8" style="color: var(--primary);" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                </svg>
+                <span class="text-xl font-bold">Excel-to-Dashboard</span>
+            </div>
+            <div class="flex items-center gap-4">
+                <button class="outline-btn">Sign In</button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="hero-gradient py-32">
+        <div class="container text-center space-y-8">
+            <div class="space-y-4">
+                <h1 class="text-6xl font-bold tracking-tight">
+                    Transform Spreadsheets into
+                    <span style="color: var(--primary);"> AI-Powered Dashboards</span>
+                </h1>
+                <p class="text-xl text-gray-600 max-w-2xl mx-auto">
+                    Upload your data, let AI suggest the perfect visualizations, and create beautiful interactive dashboards in minutes.
+                </p>
+            </div>
+            
+            <div class="flex flex-col sm:flex-row gap-4 justify-center pt-8">
+                <button class="primary-btn text-lg">
+                    Get Started →
+                </button>
+                <button class="outline-btn text-lg">
+                    Learn More
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="py-32">
+        <div class="container">
+            <div class="text-center mb-16">
+                <h2 class="text-4xl font-bold mb-4">Powerful Features</h2>
+                <p class="text-lg text-gray-600">Everything you need to transform data into insights</p>
+            </div>
+            
+            <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <!-- Feature 1 -->
+                <div class="feature-card">
+                    <div class="icon-box">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-semibold mb-2">Multi-Format Support</h3>
+                    <p class="text-gray-600">Upload CSV or Excel files with multi-sheet support. Your data stays secure in your browser.</p>
+                </div>
+
+                <!-- Feature 2 -->
+                <div class="feature-card">
+                    <div class="icon-box">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-semibold mb-2">Smart Mapping</h3>
+                    <p class="text-gray-600">Intelligent column type detection automatically maps your data fields for instant insights.</p>
+                </div>
+
+                <!-- Feature 3 -->
+                <div class="feature-card">
+                    <div class="icon-box">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-semibold mb-2">AI-Powered Charts</h3>
+                    <p class="text-gray-600">Get intelligent chart suggestions from OpenAI GPT-4 based on your data patterns.</p>
+                </div>
+
+                <!-- Feature 4 -->
+                <div class="feature-card">
+                    <div class="icon-box">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-semibold mb-2">Custom Alerts</h3>
+                    <p class="text-gray-600">Set up threshold monitoring and get notified when your data crosses important boundaries.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="py-24" style="background: linear-gradient(135deg, var(--primary) 0%, #2563eb 100%);">
+        <div class="container text-center text-white space-y-6">
+            <h2 class="text-4xl font-bold">Ready to Transform Your Data?</h2>
+            <p class="text-xl opacity-90">Start creating beautiful dashboards in minutes</p>
+            <button class="primary-btn" style="background: white; color: var(--primary);">
+                Get Started Now
+            </button>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="border-t border-gray-200 py-8">
+        <div class="container text-center text-gray-600">
+            <p>Built with Next.js, OpenAI, and shadcn/ui</p>
+        </div>
+    </footer>
+</body>
+</html>
