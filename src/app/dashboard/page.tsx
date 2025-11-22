@@ -20,6 +20,10 @@ import { LineChartWidget } from '@/components/charts/LineChartWidget';
 import { BarChartWidget } from '@/components/charts/BarChartWidget';
 import { AreaChartWidget } from '@/components/charts/AreaChartWidget';
 import { PieChartWidget } from '@/components/charts/PieChartWidget';
+import { DataTable } from '@/components/DataTable';
+import { ExportDialog } from '@/components/ExportDialog';
+import { AlertHistory } from '@/components/AlertHistory';
+import { AlertTemplates } from '@/components/AlertTemplates';
 import { rowsToObjects } from '@/lib/data-processor';
 import { runAlerts, AlertRule, AlertResult } from '@/lib/alert-engine';
 import { suggestChart, ChartSuggestion } from '@/lib/openai-ai';
@@ -428,38 +432,55 @@ export default function DashboardPage() {
 
                 {/* Alerts Section */}
                 {processedData.length > 0 && (
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Step 4: Configure Alerts</CardTitle>
-                            <CardDescription>
-                                Set up threshold monitoring and get notified when conditions are met
-                            </CardDescription>
-                        </CardHeader>
-                        <CardContent className="space-y-4">
-                            <AlertManager onAdd={handleAddAlert} />
+                    <>
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>Step 4: Configure Alerts</CardTitle>
+                                <CardDescription>
+                                    Set up threshold monitoring and get notified when conditions are met
+                                </CardDescription>
+                            </CardHeader>
+                            <CardContent className="space-y-4">
+                                <AlertTemplates onSelectTemplate={handleAddAlert} />
+                                
+                                <AlertManager onAdd={handleAddAlert} />
 
-                            {alertResults.length > 0 && (
-                                <div className="space-y-2">
-                                    <h3 className="font-semibold">Alert Status:</h3>
-                                    {alertResults.map((result) => (
-                                        <Alert
-                                            key={result.ruleId}
-                                            variant={result.triggered ? "destructive" : "default"}
-                                        >
-                                            <AlertDescription>
-                                                {result.triggered ? '🚨 Alert Triggered!' : '✅ No Alert'}
-                                                {result.currentValue !== undefined && (
-                                                    <span className="ml-2">
-                                                        (Current: {result.currentValue})
-                                                    </span>
-                                                )}
-                                            </AlertDescription>
-                                        </Alert>
-                                    ))}
-                                </div>
-                            )}
-                        </CardContent>
-                    </Card>
+                                {alertResults.length > 0 && (
+                                    <div className="space-y-2">
+                                        <h3 className="font-semibold">Alert Status:</h3>
+                                        {alertResults.map((result) => (
+                                            <Alert
+                                                key={result.ruleId}
+                                                variant={result.triggered ? "destructive" : "default"}
+                                            >
+                                                <AlertDescription>
+                                                    {result.triggered ? '🚨 Alert Triggered!' : '✅ No Alert'}
+                                                    {result.currentValue !== undefined && (
+                                                        <span className="ml-2">
+                                                            (Current: {result.currentValue})
+                                                        </span>
+                                                    )}
+                                                </AlertDescription>
+                                            </Alert>
+                                        ))}
+                                    </div>
+                                )}
+                            </CardContent>
+                        </Card>
+
+                        <AlertHistory alertResults={alertResults} alertRules={alertRules} />
+                    </>
+                )}
+
+                {/* Data Table Section */}
+                {processedData.length > 0 && (
+                    <div className="space-y-4">
+                        <div className="flex items-center justify-between">
+                            <h2 className="text-2xl font-bold">Data Explorer</h2>
+                            <ExportDialog data={processedData} columns={columns} filename="dashboard-export" />
+                        </div>
+                        <DataTable data={processedData} columns={columns} title="Raw Data" description="Explore, sort, and filter your data" />
+                    </div>
                 )}
             </div>
         </div>
