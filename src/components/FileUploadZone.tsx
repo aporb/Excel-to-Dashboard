@@ -58,9 +58,22 @@ export function FileUploadZone({ onFileSelect, accept = ".csv,.xlsx,.xls", disab
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
       className={cn(
-        "relative border-2 border-dashed rounded-lg p-12 text-center cursor-pointer transition-colors",
-        isDragging && "border-primary bg-primary/5",
-        !isDragging && "border-muted-foreground/25 hover:border-primary/50 hover:bg-accent/50",
+        /* Base Glass Styling */
+        "relative overflow-hidden",
+        "glass-standard rounded-xl p-12",
+        "text-center cursor-pointer",
+        "transition-all duration-300 ease-out",
+
+        /* Drag State */
+        isDragging && [
+          "scale-[1.02]",
+          "border-primary/50",
+        ],
+
+        /* Hover State */
+        !isDragging && "hover:scale-[1.01]",
+
+        /* Disabled State */
         disabled && "opacity-50 cursor-not-allowed"
       )}
     >
@@ -72,26 +85,57 @@ export function FileUploadZone({ onFileSelect, accept = ".csv,.xlsx,.xls", disab
         className="hidden"
         disabled={disabled}
       />
-      
-      <div className="flex flex-col items-center gap-4">
-        <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center">
+
+      {/* Animated Background Gradient */}
+      <div
+        className={cn(
+          "absolute inset-0 opacity-0 transition-opacity duration-500",
+          "bg-gradient-to-br from-primary/10 via-transparent to-accent/10",
+          isDragging && "opacity-100"
+        )}
+      />
+
+      <div className="relative z-10 flex flex-col items-center gap-6">
+        {/* Animated Icon Container */}
+        <div
+          className={cn(
+            "relative h-20 w-20 rounded-full",
+            "glass-subtle",
+            "flex items-center justify-center",
+            "transition-all duration-300",
+            isDragging && "scale-110"
+          )}
+        >
+          {/* Icon Glow Effect */}
+          <div
+            className={cn(
+              "absolute inset-0 rounded-full blur-xl opacity-0 transition-opacity duration-300",
+              "bg-gradient-to-br from-primary/40 to-accent/40",
+              isDragging && "opacity-100 animate-pulse-subtle"
+            )}
+          />
+
           {isDragging ? (
-            <FileSpreadsheet className="h-8 w-8 text-primary" />
+            <FileSpreadsheet className="relative h-10 w-10 text-primary transition-transform duration-300" />
           ) : (
-            <Upload className="h-8 w-8 text-primary" />
+            <Upload className="relative h-10 w-10 text-primary transition-transform duration-300" />
           )}
         </div>
-        
-        <div className="space-y-2">
-          <p className="text-lg font-semibold">
+
+        {/* Text Content */}
+        <div className="space-y-3">
+          <p className="text-xl font-semibold text-foreground">
             {isDragging ? "Drop your file here" : "Upload your spreadsheet"}
           </p>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm text-foreground-muted">
             Drag and drop or click to browse
           </p>
-          <p className="text-xs text-muted-foreground">
-            Supports CSV, Excel (.xlsx, .xls)
-          </p>
+          <div className="flex items-center justify-center gap-2 text-xs text-foreground-subtle">
+            <div className="h-1 w-1 rounded-full bg-foreground-subtle" />
+            <span>Supports CSV, Excel (.xlsx, .xls)</span>
+            <div className="h-1 w-1 rounded-full bg-foreground-subtle" />
+            <span>Max 10MB</span>
+          </div>
         </div>
       </div>
     </div>
