@@ -3,6 +3,7 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { KPIMetric } from '@/lib/kpi-calculator';
+import { cn } from '@/lib/utils';
 
 interface KPICardProps {
   metric: KPIMetric;
@@ -10,8 +11,19 @@ interface KPICardProps {
 }
 
 export function KPICard({ metric, icon }: KPICardProps) {
-  const trendColor = metric.trend === 'up' ? '#10b981' : metric.trend === 'down' ? '#ef4444' : '#6b7280';
   const trendIcon = metric.trend === 'up' ? '↑' : metric.trend === 'down' ? '↓' : '→';
+
+  const getTrendColorClass = (trend: 'up' | 'down' | 'stable') => {
+    switch (trend) {
+      case 'up':
+        return 'text-success';
+      case 'down':
+        return 'text-destructive';
+      case 'stable':
+      default:
+        return 'text-muted-foreground';
+    }
+  };
 
   return (
     <Card className="hover:border-primary transition-all duration-200 hover:shadow-lg">
@@ -24,7 +36,10 @@ export function KPICard({ metric, icon }: KPICardProps) {
       <CardContent className="space-y-2">
         <div className="text-3xl font-bold text-foreground">{metric.formatted}</div>
         {metric.trendPercent > 0 && (
-          <div className="flex items-center gap-1 text-sm font-semibold" style={{ color: trendColor }}>
+          <div className={cn(
+            "flex items-center gap-1 text-sm font-semibold",
+            getTrendColorClass(metric.trend)
+          )}>
             <span>{trendIcon}</span>
             <span>{metric.trendPercent}% from previous period</span>
           </div>

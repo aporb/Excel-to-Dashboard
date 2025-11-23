@@ -1,6 +1,7 @@
 "use client";
 import React from 'react';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
+import { useChartColors } from '@/hooks/useChartColors';
 
 interface ChartWidgetProps {
     data: any[];
@@ -10,22 +11,38 @@ interface ChartWidgetProps {
 }
 
 export default function ChartWidget({ data, xKey, yKey, title }: ChartWidgetProps) {
+    const colors = useChartColors();
+
     return (
         <div className="glass-panel">
-            {title && <h3 className="text-lg font-semibold text-white mb-4">{title}</h3>}
+            {title && <h3 className="text-lg font-semibold text-foreground mb-4">{title}</h3>}
             <ResponsiveContainer width="100%" height={300}>
                 <LineChart data={data}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
-                    <XAxis dataKey={xKey} stroke="#fff" />
-                    <YAxis stroke="#fff" />
+                    <CartesianGrid strokeDasharray="3 3" stroke={colors.border} />
+                    <XAxis
+                        dataKey={xKey}
+                        stroke={colors.mutedForeground}
+                        style={{ fontSize: '12px' }}
+                    />
+                    <YAxis
+                        stroke={colors.mutedForeground}
+                        style={{ fontSize: '12px' }}
+                    />
                     <Tooltip
                         contentStyle={{
-                            backgroundColor: 'rgba(0,0,0,0.8)',
-                            border: '1px solid rgba(255,255,255,0.2)',
-                            borderRadius: '8px'
+                            backgroundColor: colors.background,
+                            border: `1px solid ${colors.border}`,
+                            borderRadius: '8px',
+                            color: colors.mutedForeground
                         }}
                     />
-                    <Line type="monotone" dataKey={yKey} stroke="#a78bfa" strokeWidth={2} />
+                    <Line
+                        type="monotone"
+                        dataKey={yKey}
+                        stroke={colors.chart5}
+                        strokeWidth={2}
+                        dot={{ fill: colors.chart5 }}
+                    />
                 </LineChart>
             </ResponsiveContainer>
         </div>

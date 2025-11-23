@@ -4,30 +4,30 @@ import React from 'react';
 import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { CustomTooltip } from './CustomTooltip';
+import { useChartColors } from '@/hooks/useChartColors';
 
 interface PieChartWidgetProps {
   data: Record<string, any>[];
   xKey: string;
   yKey: string;
   title?: string;
-  colors?: string[];
 }
 
-const DEFAULT_COLORS = [
-  'hsl(var(--chart-1))',
-  'hsl(var(--chart-2))',
-  'hsl(var(--chart-3))',
-  'hsl(var(--chart-4))',
-  'hsl(var(--chart-5))',
-];
-
-export function PieChartWidget({ 
-  data, 
-  xKey, 
-  yKey, 
-  title, 
-  colors = DEFAULT_COLORS 
+export function PieChartWidget({
+  data,
+  xKey,
+  yKey,
+  title
 }: PieChartWidgetProps) {
+  const colors = useChartColors();
+
+  const chartColors = [
+    colors.chart1,
+    colors.chart2,
+    colors.chart3,
+    colors.chart4,
+    colors.chart5,
+  ];
   if (!data || data.length === 0) {
     return (
       <Card>
@@ -64,12 +64,11 @@ export function PieChartWidget({
               labelLine={false}
               label={({ name, percent }) => `${name} ${((percent ?? 0) * 100).toFixed(0)}%`}
               outerRadius={80}
-              fill="#8884d8"
               dataKey="value"
               isAnimationActive={true}
             >
               {pieData.map((entry, index) => (
-                <Cell key={`cell-${index}`} fill={colors[index % colors.length]} />
+                <Cell key={`cell-${index}`} fill={chartColors[index % chartColors.length]} />
               ))}
             </Pie>
             <Tooltip content={<CustomTooltip />} />

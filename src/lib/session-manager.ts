@@ -1,16 +1,37 @@
 import localforage from 'localforage';
 import { ChartSuggestion } from './openai-ai';
 import { AlertRule } from './alert-engine';
+import { DashboardConfig, createEmptyDashboardConfig, ChartConfig } from './dashboard-types';
+import { DashboardVariation } from './dashboard-variations';
+import { ImprovementRecord } from './improvement-history';
 
 export interface DashboardSession {
   id: string;
   uploadedData: Record<string, any[]>;
   processedData: Record<string, any>[];
   columnMapping: Record<string, string>;
+
+  // DEPRECATED: Keep for backward compatibility with old sessions
   chartSuggestion?: ChartSuggestion;
+
+  // NEW: Multi-chart dashboard config
+  dashboardConfig?: DashboardConfig;
+
+  // PHASE 3: Dashboard variations (P9)
+  dashboardVariations?: DashboardVariation[];
+  selectedVariationIndex?: number;
+
+  // PHASE 3: Improvement history (P10)
+  improvementHistory?: ImprovementRecord[];
+
   alertRules: AlertRule[];
   lastUpdated: string;
   selectedSheet?: string;
+
+  // NEW: Optional metadata
+  name?: string;
+  description?: string;
+  tags?: string[];
 }
 
 class SessionManager {
@@ -37,9 +58,75 @@ class SessionManager {
   async loadSession(sessionId: string): Promise<DashboardSession | null> {
     try {
       const session = await this.store.getItem(sessionId) as DashboardSession | null;
+
+      if (session) {
+        // MIGRATION: If old session has chartSuggestion but no dashboardConfig
+        if (session.chartSuggestion && !session.dashboardConfig) {
+          session.dashboardConfig = this.migrateChartSuggestionToConfig(session.chartSuggestion);
+        }
+
+        // Ensure dashboardConfig exists
+        if (!session.dashboardConfig) {
+          session.dashboardConfig = createEmptyDashboardConfig();
+        }
+      }
+
       return session;
     } catch (error) {
       console.error('Failed to load session:', error);
+      return null;
+    }
+  }
+
+  // NEW: Migration helper
+  private migrateChartSuggestionToConfig(suggestion: ChartSuggestion): DashboardConfig {
+    const config = createEmptyDashboardConfig();
+
+    // Create single chart from old suggestion
+    const chartId = crypto.randomUUID();
+    const chart: ChartConfig = {
+      id: chartId,
+      type: suggestion.chartType,
+      title: `${suggestion.chartType.charAt(0).toUpperCase() + suggestion.chartType.slice(1)} Chart`,
+      xField: suggestion.xKey,
+      yField: suggestion.yKey,
+      span: 12, // Full width
+    };
+    config.charts.push(chart);
+
+    // Create default layout
+    config.layout.rows.push({
+      id: crypto.randomUUID(),
+      widgets: [chartId],
+      span: [12],
+    });
+
+    return config;
+  }
+
+  // NEW: Load the most recent session
+  async loadLatestSession(): Promise<DashboardSession | null> {
+    try {
+      const sessionIds = await this.getAllSessionIds();
+      if (sessionIds.length === 0) return null;
+
+      // Load all sessions and find the most recent one
+      const sessions: DashboardSession[] = [];
+      for (const id of sessionIds) {
+        const session = await this.loadSession(id);
+        if (session) sessions.push(session);
+      }
+
+      if (sessions.length === 0) return null;
+
+      // Sort by lastUpdated and return the most recent
+      sessions.sort((a, b) =>
+        new Date(b.lastUpdated).getTime() - new Date(a.lastUpdated).getTime()
+      );
+
+      return sessions[0];
+    } catch (error) {
+      console.error('Failed to load latest session:', error);
       return null;
     }
   }

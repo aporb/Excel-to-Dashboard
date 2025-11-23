@@ -4,16 +4,17 @@ import React from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { CustomTooltip } from './CustomTooltip';
+import { useChartColors } from '@/hooks/useChartColors';
 
 interface BarChartWidgetProps {
   data: Record<string, any>[];
   xKey: string;
   yKey: string;
   title?: string;
-  color?: string;
 }
 
-export function BarChartWidget({ data, xKey, yKey, title, color = 'hsl(var(--chart-3))' }: BarChartWidgetProps) {
+export function BarChartWidget({ data, xKey, yKey, title }: BarChartWidgetProps) {
+  const colors = useChartColors();
   if (!data || data.length === 0) {
     return (
       <Card>
@@ -37,24 +38,24 @@ export function BarChartWidget({ data, xKey, yKey, title, color = 'hsl(var(--cha
       <CardContent>
         <ResponsiveContainer width="100%" height={300}>
           <BarChart data={data} margin={{ top: 5, right: 30, left: 0, bottom: 5 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-            <XAxis 
-              dataKey={xKey} 
-              stroke="hsl(var(--muted-foreground))"
+            <CartesianGrid strokeDasharray="3 3" stroke={colors.border} />
+            <XAxis
+              dataKey={xKey}
+              stroke={colors.mutedForeground}
               style={{ fontSize: '12px' }}
             />
-            <YAxis 
-              stroke="hsl(var(--muted-foreground))"
+            <YAxis
+              stroke={colors.mutedForeground}
               style={{ fontSize: '12px' }}
             />
             <Tooltip
               content={<CustomTooltip />}
-              cursor={{ fill: `${color}20` }}
+              cursor={{ fill: `${colors.chart3}20` }}
             />
             <Legend />
             <Bar
               dataKey={yKey}
-              fill={color}
+              fill={colors.chart3}
               radius={[8, 8, 0, 0]}
               isAnimationActive={true}
             />

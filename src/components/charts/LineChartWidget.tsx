@@ -4,16 +4,17 @@ import React from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { CustomTooltip } from './CustomTooltip';
+import { useChartColors } from '@/hooks/useChartColors';
 
 interface LineChartWidgetProps {
   data: Record<string, any>[];
   xKey: string;
   yKey: string;
   title?: string;
-  color?: string;
 }
 
-export function LineChartWidget({ data, xKey, yKey, title, color = 'hsl(var(--chart-1))' }: LineChartWidgetProps) {
+export function LineChartWidget({ data, xKey, yKey, title }: LineChartWidgetProps) {
+  const colors = useChartColors();
   if (!data || data.length === 0) {
     return (
       <Card>
@@ -37,27 +38,27 @@ export function LineChartWidget({ data, xKey, yKey, title, color = 'hsl(var(--ch
       <CardContent>
         <ResponsiveContainer width="100%" height={300}>
           <LineChart data={data} margin={{ top: 5, right: 30, left: 0, bottom: 5 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-            <XAxis 
-              dataKey={xKey} 
-              stroke="hsl(var(--muted-foreground))"
+            <CartesianGrid strokeDasharray="3 3" stroke={colors.border} />
+            <XAxis
+              dataKey={xKey}
+              stroke={colors.mutedForeground}
               style={{ fontSize: '12px' }}
             />
-            <YAxis 
-              stroke="hsl(var(--muted-foreground))"
+            <YAxis
+              stroke={colors.mutedForeground}
               style={{ fontSize: '12px' }}
             />
             <Tooltip
               content={<CustomTooltip />}
-              cursor={{ stroke: color, strokeWidth: 2 }}
+              cursor={{ stroke: colors.chart1, strokeWidth: 2 }}
             />
             <Legend />
             <Line
               type="monotone"
               dataKey={yKey}
-              stroke={color}
+              stroke={colors.chart1}
               strokeWidth={2}
-              dot={{ fill: color, r: 4 }}
+              dot={{ fill: colors.chart1, r: 4 }}
               activeDot={{ r: 6 }}
               isAnimationActive={true}
             />

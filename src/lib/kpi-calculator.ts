@@ -3,6 +3,129 @@
  * Calculates key performance indicators and metrics from data
  */
 
+import { KPIExpression, FilterExpression, AggregationType } from './dashboard-types';
+
+// ============================================================================
+// NEW: KPI CALCULATION ENGINE for DashboardConfig
+// ============================================================================
+
+export function calculateKPI(
+  expression: KPIExpression,
+  data: Record<string, any>[]
+): number {
+  // Apply filter if present
+  let filteredData = data;
+  if (expression.filter) {
+    filteredData = data.filter(row => evaluateFilter(row, expression.filter!));
+  }
+
+  // Extract field values
+  const values = filteredData
+    .map(row => row[expression.field])
+    .filter(v => v != null && v !== '' && !isNaN(Number(v)))
+    .map(Number);
+
+  if (values.length === 0) return 0;
+
+  // Apply aggregation
+  switch (expression.aggregation) {
+    case 'sum':
+      return values.reduce((a, b) => a + b, 0);
+
+    case 'avg':
+      return values.reduce((a, b) => a + b, 0) / values.length;
+
+    case 'min':
+      return Math.min(...values);
+
+    case 'max':
+      return Math.max(...values);
+
+    case 'count':
+      return filteredData.length;
+
+    case 'countDistinct':
+      return new Set(values).size;
+
+    default:
+      return 0;
+  }
+}
+
+export function evaluateFilter(
+  row: Record<string, any>,
+  filter: FilterExpression
+): boolean {
+  const fieldValue = row[filter.field];
+
+  switch (filter.operator) {
+    case '==':
+      return fieldValue === filter.value;
+
+    case '!=':
+      return fieldValue !== filter.value;
+
+    case '>':
+      return Number(fieldValue) > Number(filter.value);
+
+    case '<':
+      return Number(fieldValue) < Number(filter.value);
+
+    case '>=':
+      return Number(fieldValue) >= Number(filter.value);
+
+    case '<=':
+      return Number(fieldValue) <= Number(filter.value);
+
+    case 'in':
+      return Array.isArray(filter.value) && filter.value.includes(fieldValue);
+
+    case 'contains':
+      return String(fieldValue).toLowerCase().includes(String(filter.value).toLowerCase());
+
+    case 'between':
+      if (Array.isArray(filter.value) && filter.value.length === 2) {
+        const numValue = Number(fieldValue);
+        return numValue >= filter.value[0] && numValue <= filter.value[1];
+      }
+      return false;
+
+    default:
+      return true;
+  }
+}
+
+export function formatKPIValue(
+  value: number,
+  format: 'number' | 'currency' | 'percentage'
+): string {
+  switch (format) {
+    case 'currency':
+      return new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: 'USD',
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0,
+      }).format(value);
+
+    case 'percentage':
+      return `${(value * 100).toFixed(1)}%`;
+
+    case 'number':
+    default:
+      if (Math.abs(value) >= 1_000_000) {
+        return `${(value / 1_000_000).toFixed(1)}M`;
+      } else if (Math.abs(value) >= 1_000) {
+        return `${(value / 1_000).toFixed(1)}K`;
+      }
+      return value.toFixed(0);
+  }
+}
+
+// ============================================================================
+// LEGACY: Original KPIMetric interface and KPICalculator class
+// ============================================================================
+
 export interface KPIMetric {
   name: string;
   value: number;
