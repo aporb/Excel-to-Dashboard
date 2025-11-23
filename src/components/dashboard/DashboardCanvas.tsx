@@ -161,13 +161,15 @@ export default function DashboardCanvas({
       }`;
 
       return (
-        <div key={widget.id} className="space-y-2">
-          {/* Chart Type Selector */}
-          {isSelected && onChartTypeChange && widget.type !== 'scatter' && widget.type !== 'table' && (
-            <ChartTypeSelector
-              selectedType={widget.type as 'line' | 'bar' | 'area' | 'pie'}
-              onSelect={handleTypeChange}
-            />
+        <div key={widget.id} className="space-y-4">
+          {/* Chart Type Selector - Always visible */}
+          {onChartTypeChange && (
+            <div className={`transition-all ${isSelected ? 'ring-2 ring-primary rounded-lg p-3' : 'p-3 bg-muted/30 rounded-lg'}`}>
+              <ChartTypeSelector
+                selectedType={widget.type}
+                onSelect={handleTypeChange}
+              />
+            </div>
           )}
 
           {/* Chart */}

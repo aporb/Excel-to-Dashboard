@@ -76,7 +76,8 @@ export function ExportDialog({ data, columns, filename = 'export', dashboardElem
       setOpen(false);
     } catch (error) {
       console.error('CSV export error:', error);
-      toast.error('Failed to export CSV');
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      toast.error(`Failed to export CSV: ${errorMessage}`);
     } finally {
       setIsExporting(false);
     }
@@ -116,7 +117,8 @@ export function ExportDialog({ data, columns, filename = 'export', dashboardElem
       setOpen(false);
     } catch (error) {
       console.error('JSON export error:', error);
-      toast.error('Failed to export JSON');
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      toast.error(`Failed to export JSON: ${errorMessage}`);
     } finally {
       setIsExporting(false);
     }
@@ -161,7 +163,8 @@ export function ExportDialog({ data, columns, filename = 'export', dashboardElem
       setOpen(false);
     } catch (error) {
       console.error('TSV export error:', error);
-      toast.error('Failed to export TSV');
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      toast.error(`Failed to export TSV: ${errorMessage}`);
     } finally {
       setIsExporting(false);
     }
@@ -176,14 +179,17 @@ export function ExportDialog({ data, columns, filename = 'export', dashboardElem
       return;
     }
 
+    let toastId: string | number | undefined;
     try {
       setIsExporting(true);
-      toast.loading('Generating PNG...');
+      toastId = toast.loading('Generating PNG...', { duration: Infinity });
       await exportDashboardAsPNG(dashboardElementId, filename);
+      toast.dismiss(toastId);
       toast.success('Dashboard exported as PNG');
       setOpen(false);
     } catch (error) {
       console.error('Dashboard PNG export error:', error);
+      if (toastId) toast.dismiss(toastId);
       toast.error(error instanceof Error ? error.message : 'Failed to export dashboard as PNG');
     } finally {
       setIsExporting(false);
@@ -199,18 +205,21 @@ export function ExportDialog({ data, columns, filename = 'export', dashboardElem
       return;
     }
 
+    let toastId: string | number | undefined;
     try {
       setIsExporting(true);
-      toast.loading('Generating PDF...');
+      toastId = toast.loading('Generating PDF...', { duration: Infinity });
       await exportDashboardAsPDF(dashboardElementId, filename, {
         title: `Dashboard Export - ${new Date().toLocaleDateString()}`,
         author: 'Excel-to-Dashboard',
         includeMetadata: true,
       });
+      toast.dismiss(toastId);
       toast.success('Dashboard exported as PDF');
       setOpen(false);
     } catch (error) {
       console.error('Dashboard PDF export error:', error);
+      if (toastId) toast.dismiss(toastId);
       toast.error(error instanceof Error ? error.message : 'Failed to export dashboard as PDF');
     } finally {
       setIsExporting(false);
@@ -238,9 +247,13 @@ export function ExportDialog({ data, columns, filename = 'export', dashboardElem
           <button
             onClick={handleExportCSV}
             disabled={isExporting}
-            className="flex items-start gap-3 p-3 rounded-lg border border-border hover:bg-muted transition-colors text-left disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex items-start gap-3 p-3 rounded-lg border border-border hover:bg-muted transition-colors text-left disabled:opacity-50 disabled:cursor-not-allowed relative"
           >
-            <FileText className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
+            {isExporting ? (
+              <Loader2 className="h-5 w-5 text-primary mt-0.5 flex-shrink-0 animate-spin" />
+            ) : (
+              <FileText className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
+            )}
             <div>
               <div className="font-semibold">CSV (Comma-Separated)</div>
               <div className="text-sm text-muted-foreground">
@@ -255,7 +268,11 @@ export function ExportDialog({ data, columns, filename = 'export', dashboardElem
             disabled={isExporting}
             className="flex items-start gap-3 p-3 rounded-lg border border-border hover:bg-muted transition-colors text-left disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <File className="h-5 w-5 text-blue-500 mt-0.5 flex-shrink-0" />
+            {isExporting ? (
+              <Loader2 className="h-5 w-5 text-blue-500 mt-0.5 flex-shrink-0 animate-spin" />
+            ) : (
+              <File className="h-5 w-5 text-blue-500 mt-0.5 flex-shrink-0" />
+            )}
             <div>
               <div className="font-semibold">JSON (JavaScript Object)</div>
               <div className="text-sm text-muted-foreground">
@@ -270,7 +287,11 @@ export function ExportDialog({ data, columns, filename = 'export', dashboardElem
             disabled={isExporting}
             className="flex items-start gap-3 p-3 rounded-lg border border-border hover:bg-muted transition-colors text-left disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <Image className="h-5 w-5 text-green-500 mt-0.5 flex-shrink-0" />
+            {isExporting ? (
+              <Loader2 className="h-5 w-5 text-green-500 mt-0.5 flex-shrink-0 animate-spin" />
+            ) : (
+              <Image className="h-5 w-5 text-green-500 mt-0.5 flex-shrink-0" />
+            )}
             <div>
               <div className="font-semibold">TSV (Tab-Separated)</div>
               <div className="text-sm text-muted-foreground">
@@ -286,7 +307,11 @@ export function ExportDialog({ data, columns, filename = 'export', dashboardElem
               disabled={isExporting}
               className="flex items-start gap-3 p-3 rounded-lg border border-border hover:bg-muted transition-colors text-left disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <Image className="h-5 w-5 text-orange-500 mt-0.5 flex-shrink-0" />
+              {isExporting ? (
+                <Loader2 className="h-5 w-5 text-orange-500 mt-0.5 flex-shrink-0 animate-spin" />
+              ) : (
+                <Image className="h-5 w-5 text-orange-500 mt-0.5 flex-shrink-0" />
+              )}
               <div>
                 <div className="font-semibold">PNG (Image)</div>
                 <div className="text-sm text-muted-foreground">
@@ -303,7 +328,11 @@ export function ExportDialog({ data, columns, filename = 'export', dashboardElem
               disabled={isExporting}
               className="flex items-start gap-3 p-3 rounded-lg border border-border hover:bg-muted transition-colors text-left disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <FileText className="h-5 w-5 text-red-500 mt-0.5 flex-shrink-0" />
+              {isExporting ? (
+                <Loader2 className="h-5 w-5 text-red-500 mt-0.5 flex-shrink-0 animate-spin" />
+              ) : (
+                <FileText className="h-5 w-5 text-red-500 mt-0.5 flex-shrink-0" />
+              )}
               <div>
                 <div className="font-semibold">PDF (Document)</div>
                 <div className="text-sm text-muted-foreground">
@@ -315,7 +344,7 @@ export function ExportDialog({ data, columns, filename = 'export', dashboardElem
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={() => setOpen(false)}>
+          <Button variant="outline" onClick={() => setOpen(false)} disabled={isExporting}>
             Cancel
           </Button>
         </DialogFooter>

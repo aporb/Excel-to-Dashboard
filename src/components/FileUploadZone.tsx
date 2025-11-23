@@ -1,16 +1,17 @@
 "use client"
 
 import * as React from "react"
-import { Upload, FileSpreadsheet } from "lucide-react"
+import { Upload, FileSpreadsheet, Loader2 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 interface FileUploadZoneProps {
   onFileSelect: (file: File) => void
   accept?: string
   disabled?: boolean
+  isUploading?: boolean
 }
 
-export function FileUploadZone({ onFileSelect, accept = ".csv,.xlsx,.xls", disabled = false }: FileUploadZoneProps) {
+export function FileUploadZone({ onFileSelect, accept = ".csv,.xlsx,.xls", disabled = false, isUploading = false }: FileUploadZoneProps) {
   const [isDragging, setIsDragging] = React.useState(false)
   const fileInputRef = React.useRef<HTMLInputElement>(null)
 
@@ -46,7 +47,7 @@ export function FileUploadZone({ onFileSelect, accept = ".csv,.xlsx,.xls", disab
   }
 
   const handleClick = () => {
-    if (!disabled) {
+    if (!disabled && !isUploading) {
       fileInputRef.current?.click()
     }
   }
@@ -71,10 +72,10 @@ export function FileUploadZone({ onFileSelect, accept = ".csv,.xlsx,.xls", disab
         ],
 
         /* Hover State */
-        !isDragging && "hover:scale-[1.01]",
+        !isDragging && !isUploading && "hover:scale-[1.01]",
 
         /* Disabled State */
-        disabled && "opacity-50 cursor-not-allowed"
+        (disabled || isUploading) && "opacity-50 cursor-not-allowed"
       )}
     >
       <input
@@ -94,6 +95,17 @@ export function FileUploadZone({ onFileSelect, accept = ".csv,.xlsx,.xls", disab
           isDragging && "opacity-100"
         )}
       />
+
+      {/* Loading Overlay */}
+      {isUploading && (
+        <div className="absolute inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center z-20">
+          <div className="flex flex-col items-center gap-4">
+            <Loader2 className="h-12 w-12 animate-spin text-primary" />
+            <p className="text-lg font-semibold text-foreground">Processing file...</p>
+            <p className="text-sm text-foreground-muted">Please wait while we parse your data</p>
+          </div>
+        </div>
+      )}
 
       <div className="relative z-10 flex flex-col items-center gap-6">
         {/* Animated Icon Container */}

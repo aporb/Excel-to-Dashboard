@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useMemo } from 'react';
-import { Calendar, Filter, X, ChevronDown } from 'lucide-react';
+import { Calendar, Filter, X, ChevronDown, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
@@ -25,9 +25,10 @@ interface FilterBarProps {
   data: Record<string, any>[];
   values: FilterValues;
   onChange: (values: FilterValues) => void;
+  isApplying?: boolean;
 }
 
-export function FilterBar({ filters, data, values, onChange }: FilterBarProps) {
+export function FilterBar({ filters, data, values, onChange, isApplying = false }: FilterBarProps) {
   const [isExpanded, setIsExpanded] = useState(true);
   const [activeFilterCount, setActiveFilterCount] = useState(0);
 
@@ -61,12 +62,19 @@ export function FilterBar({ filters, data, values, onChange }: FilterBarProps) {
       <div className="p-4">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
-            <Filter className="h-4 w-4 text-primary" />
+            {isApplying ? (
+              <Loader2 className="h-4 w-4 text-primary animate-spin" />
+            ) : (
+              <Filter className="h-4 w-4 text-primary" />
+            )}
             <h3 className="font-semibold">Filters</h3>
             {activeFilterCount > 0 && (
               <Badge variant="secondary" className="ml-2">
                 {activeFilterCount} active
               </Badge>
+            )}
+            {isApplying && (
+              <span className="text-xs text-muted-foreground">Applying filters...</span>
             )}
           </div>
           <div className="flex items-center gap-2">
@@ -76,6 +84,7 @@ export function FilterBar({ filters, data, values, onChange }: FilterBarProps) {
                 size="sm"
                 onClick={handleClearAll}
                 className="text-xs"
+                disabled={isApplying}
               >
                 Clear All
               </Button>
@@ -84,6 +93,7 @@ export function FilterBar({ filters, data, values, onChange }: FilterBarProps) {
               variant="ghost"
               size="sm"
               onClick={() => setIsExpanded(!isExpanded)}
+              disabled={isApplying}
             >
               <ChevronDown
                 className={`h-4 w-4 transition-transform ${

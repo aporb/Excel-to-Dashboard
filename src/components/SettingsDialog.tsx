@@ -18,6 +18,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { toast } from "sonner"
 import { useTheme } from "next-themes"
 import { notificationManager, NotificationManager } from "@/lib/notification-manager"
+import { STORAGE_KEYS } from "@/lib/storage-keys"
 
 export function SettingsDialog() {
   const [apiKey, setApiKey] = React.useState("")
@@ -31,7 +32,7 @@ export function SettingsDialog() {
   React.useEffect(() => {
     setMounted(true)
     // Load API key from localStorage on mount
-    const savedKey = localStorage.getItem("openai_api_key")
+    const savedKey = localStorage.getItem(STORAGE_KEYS.GEMINI_API_KEY)
     if (savedKey) {
       setApiKey(savedKey)
     }
@@ -47,11 +48,11 @@ export function SettingsDialog() {
 
   const handleSave = () => {
     if (apiKey.trim()) {
-      localStorage.setItem("openai_api_key", apiKey.trim())
+      localStorage.setItem(STORAGE_KEYS.GEMINI_API_KEY, apiKey.trim())
       toast.success("API key saved successfully!")
       setOpen(false)
     } else {
-      localStorage.removeItem("openai_api_key")
+      localStorage.removeItem(STORAGE_KEYS.GEMINI_API_KEY)
       toast.info("API key removed")
       setOpen(false)
     }
@@ -59,7 +60,7 @@ export function SettingsDialog() {
 
   const handleClear = () => {
     setApiKey("")
-    localStorage.removeItem("openai_api_key")
+    localStorage.removeItem(STORAGE_KEYS.GEMINI_API_KEY)
     toast.info("API key cleared")
   }
 
@@ -128,23 +129,23 @@ export function SettingsDialog() {
           <TabsContent value="api" className="space-y-4">
             <div className="space-y-4 py-4">
               <div className="grid gap-2">
-                <Label htmlFor="apiKey">OpenAI API Key</Label>
+                <Label htmlFor="apiKey">Google Gemini API Key</Label>
                 <Input
                   id="apiKey"
                   type="password"
-                  placeholder="sk-..."
+                  placeholder="AI..."
                   value={apiKey}
                   onChange={(e) => setApiKey(e.target.value)}
                 />
                 <p className="text-sm text-muted-foreground">
                   Get your API key from{" "}
                   <a
-                    href="https://platform.openai.com/api-keys"
+                    href="https://aistudio.google.com/app/apikey"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-primary underline"
                   >
-                    OpenAI Platform
+                    Google AI Studio
                   </a>
                   . Your key is stored locally and never sent to our servers.
                 </p>

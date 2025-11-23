@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,12 +8,14 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { KPIConfig, AggregationType } from '@/lib/dashboard-types';
 import * as LucideIcons from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 
 interface KPIBuilderProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   columns: string[];
   onSave: (kpi: KPIConfig) => void;
+  data?: Record<string, any>[];
 }
 
 const LUCIDE_ICONS = [
@@ -21,13 +23,74 @@ const LUCIDE_ICONS = [
   'ShoppingCart', 'Database', 'BarChart3', 'PieChart', 'Target'
 ];
 
-export default function KPIBuilder({ open, onOpenChange, columns, onSave }: KPIBuilderProps) {
+export default function KPIBuilder({ open, onOpenChange, columns, onSave, data = [] }: KPIBuilderProps) {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [field, setField] = useState(columns[0] || '');
   const [aggregation, setAggregation] = useState<AggregationType>('sum');
   const [format, setFormat] = useState<'number' | 'currency' | 'percentage'>('number');
   const [icon, setIcon] = useState('Activity');
+  const [isCalculatingPreview, setIsCalculatingPreview] = useState(false);
+
+  // Calculate preview value with simulated loading for large datasets
+  const previewValue = useMemo(() => {
+    if (!field || !data || data.length === 0) return null;
+
+    setIsCalculatingPreview(true);
+
+    // Simulate async calculation for large datasets
+    const timer = setTimeout(() => {
+      setIsCalculatingPreview(false);
+    }, data.length > 1000 ? 500 : 100);
+
+    const values = data
+      .map(row => row[field])
+      .filter(val => val !== null && val !== undefined && val !== '');
+
+    let result: number | null = null;
+
+    switch (aggregation) {
+      case 'sum':
+        result = values.reduce((acc, val) => acc + Number(val), 0);
+        break;
+      case 'avg':
+        result = values.length > 0 ? values.reduce((acc, val) => acc + Number(val), 0) / values.length : 0;
+        break;
+      case 'min':
+        result = values.length > 0 ? Math.min(...values.map(Number)) : 0;
+        break;
+      case 'max':
+        result = values.length > 0 ? Math.max(...values.map(Number)) : 0;
+        break;
+      case 'count':
+        result = values.length;
+        break;
+      case 'countDistinct':
+        result = new Set(values).size;
+        break;
+      default:
+        result = 0;
+    }
+
+    return () => {
+      clearTimeout(timer);
+      return result;
+    };
+  }, [field, aggregation, data]);
+
+  const formattedPreview = useMemo(() => {
+    const value = typeof previewValue === 'function' ? previewValue() : previewValue;
+    if (value === null) return 'N/A';
+
+    switch (format) {
+      case 'currency':
+        return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(value);
+      case 'percentage':
+        return `${value.toFixed(2)}%`;
+      default:
+        return new Intl.NumberFormat('en-US').format(value);
+    }
+  }, [previewValue, format]);
 
   const handleSave = () => {
     if (!title || !field) {
@@ -154,13 +217,44 @@ export default function KPIBuilder({ open, onOpenChange, columns, onSave }: KPIB
               </SelectContent>
             </Select>
           </div>
+
+          {/* Preview Section */}
+          {data && data.length > 0 && field && (
+            <div className="space-y-2 pt-4 border-t">
+              <Label className="text-sm font-medium">Preview</Label>
+              <div className="glass-subtle rounded-lg p-4 flex items-center justify-between">
+                <div>
+                  <div className="text-xs text-muted-foreground uppercase tracking-wide">
+                    {title || 'Untitled KPI'}
+                  </div>
+                  <div className="text-2xl font-bold mt-1">
+                    {isCalculatingPreview ? (
+                      <div className="flex items-center gap-2">
+                        <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                        <span className="text-base text-muted-foreground">Calculating...</span>
+                      </div>
+                    ) : (
+                      formattedPreview
+                    )}
+                  </div>
+                </div>
+                {!isCalculatingPreview && (() => {
+                  const IconComponent = (LucideIcons as any)[icon];
+                  return IconComponent ? <IconComponent className="h-8 w-8 text-primary/50" /> : null;
+                })()}
+              </div>
+              <div className="text-xs text-muted-foreground">
+                Based on {data.length.toLocaleString()} rows
+              </div>
+            </div>
+          )}
         </div>
 
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
-          <Button onClick={handleSave} disabled={!title || !field}>
+          <Button onClick={handleSave} disabled={!title || !field || isCalculatingPreview}>
             Create KPI
           </Button>
         </DialogFooter>
