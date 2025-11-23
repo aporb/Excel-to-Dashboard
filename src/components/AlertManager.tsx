@@ -27,20 +27,20 @@ export default function AlertManager({ onAdd }: { onAdd: (rule: AlertRule) => vo
     };
 
     return (
-        <div className="bg-white/5 rounded-lg border border-white/10 p-4">
-            <h3 className="text-lg font-semibold text-white mb-3">Add Alert Rule</h3>
+        <div className="glass-subtle rounded-lg border border-border-subtle p-4">
+            <h3 className="text-lg font-semibold text-foreground mb-3">Add Alert Rule</h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                 <input
                     type="text"
                     placeholder="Metric (e.g., Sales)"
                     value={metric}
                     onChange={(e) => setMetric(e.target.value)}
-                    className="bg-white/10 text-white border border-white/20 rounded px-3 py-2 placeholder-gray-400"
+                    className="bg-muted text-foreground border border-border rounded px-3 py-2 placeholder:text-muted-foreground focus-ring"
                 />
                 <select
                     value={condition}
                     onChange={(e) => setCondition(e.target.value)}
-                    className="bg-white/10 text-white border border-white/20 rounded px-3 py-2"
+                    className="bg-muted text-foreground border border-border rounded px-3 py-2 focus-ring"
                 >
                     <option value=">">&gt;</option>
                     <option value="<">&lt;</option>
@@ -53,7 +53,7 @@ export default function AlertManager({ onAdd }: { onAdd: (rule: AlertRule) => vo
                     placeholder="Threshold"
                     value={threshold}
                     onChange={(e) => setThreshold(e.target.value)}
-                    className="bg-white/10 text-white border border-white/20 rounded px-3 py-2 placeholder-gray-400"
+                    className="bg-muted text-foreground border border-border rounded px-3 py-2 placeholder:text-muted-foreground focus-ring"
                 />
             </div>
             <button

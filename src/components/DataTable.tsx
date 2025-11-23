@@ -129,7 +129,7 @@ export function DataTable({ data, columns, title = 'Data Table', description = '
   };
 
   return (
-    <Card>
+    <Card variant="glass" hoverable className="animate-fade-in-up">
       <CardHeader>
         <CardTitle>{title}</CardTitle>
         <CardDescription>{description}</CardDescription>
@@ -137,25 +137,41 @@ export function DataTable({ data, columns, title = 'Data Table', description = '
       <CardContent className="space-y-4">
         {/* Search Bar */}
         <div className="flex items-center gap-2">
-          <Search className="h-4 w-4 text-muted-foreground" />
+          <Search className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
           <Input
             placeholder="Search all columns..."
             value={searchTerm}
             onChange={(e) => handleSearch(e.target.value)}
-            className="flex-1"
+            className="flex-1 focus-glass"
+            aria-label="Search table data"
           />
         </div>
 
         {/* Table */}
-        <div className="border rounded-lg overflow-x-auto">
+        <div className="border rounded-lg overflow-x-auto glass-subtle">
           <Table>
             <TableHeader>
               <TableRow>
                 {columns.map((column) => (
                   <TableHead
                     key={column}
-                    className="cursor-pointer hover:bg-muted/50 transition-colors"
+                    className="cursor-pointer hover:bg-muted/50 transition-smooth"
                     onClick={() => handleSort(column)}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        handleSort(column);
+                      }
+                    }}
+                    aria-sort={
+                      sortColumn === column
+                        ? sortDirection === 'asc'
+                          ? 'ascending'
+                          : 'descending'
+                        : 'none'
+                    }
                   >
                     <div className="flex items-center justify-between">
                       <span>{column}</span>
@@ -168,7 +184,7 @@ export function DataTable({ data, columns, title = 'Data Table', description = '
             <TableBody>
               {paginatedData.length > 0 ? (
                 paginatedData.map((row, idx) => (
-                  <TableRow key={idx} className="hover:bg-muted/50 transition-colors">
+                  <TableRow key={idx} className="hover:bg-muted/50 transition-smooth">
                     {columns.map((column) => (
                       <TableCell key={`${idx}-${column}`} className="text-sm">
                         {formatValue(row[column])}

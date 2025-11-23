@@ -32,7 +32,20 @@ import { DataValidator } from '@/lib/data-schemas';
 import { ChartIntelligence, ChartType } from '@/lib/chart-intelligence';
 import { KPICalculator } from '@/lib/kpi-calculator';
 import { notificationManager } from '@/lib/notification-manager';
-import { BarChart3, Sparkles, Loader2, Home, Database, TrendingUp, Bell } from 'lucide-react';
+import { DashboardConfig, ChartType as DashboardChartType, KPIConfig } from '@/lib/dashboard-types';
+import { generateBasicDashboard } from '@/lib/dashboard-generator-basic';
+import { generateDashboardWithAI, validateDashboardFields } from '@/lib/ai-dashboard-generator';
+import { generateFiltersFromData } from '@/lib/filter-utils';
+import DashboardCanvas from '@/components/dashboard/DashboardCanvas';
+import KPIBuilder from '@/components/dashboard/KPIBuilder';
+// PHASE 3 IMPORTS
+import { generateDashboardVariations, DashboardVariation } from '@/lib/dashboard-variations';
+import { improveChartWithAI } from '@/lib/chart-improvement';
+import { improvementHistory, ImprovementRecord } from '@/lib/improvement-history';
+import DashboardVariationsCarousel from '@/components/dashboard/DashboardVariationsCarousel';
+import ChartImprovementDialog from '@/components/dashboard/ChartImprovementDialog';
+import ImprovementHistoryPanel from '@/components/dashboard/ImprovementHistoryPanel';
+import { BarChart3, Sparkles, Loader2, Home, Database, TrendingUp, Bell, Plus, Edit, Save, FolderOpen, Wand2, History } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function DashboardPage() {
@@ -43,11 +56,26 @@ export default function DashboardPage() {
     const [columns, setColumns] = useState<string[]>([]);
     const [columnMapping, setColumnMapping] = useState<Record<string, string>>({});
     const [chartSuggestion, setChartSuggestion] = useState<ChartSuggestion | null>(null);
+    const [dashboardConfig, setDashboardConfig] = useState<DashboardConfig | null>(null);
+    const [selectedChartId, setSelectedChartId] = useState<string | null>(null);
+    const [showKPIBuilder, setShowKPIBuilder] = useState(false);
+    const [isEditMode, setIsEditMode] = useState(false);
     const [alertRules, setAlertRules] = useState<AlertRule[]>([]);
     const [alertResults, setAlertResults] = useState<AlertResult[]>([]);
     const [isLoadingSuggestion, setIsLoadingSuggestion] = useState(false);
     const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
     const [sessionLoaded, setSessionLoaded] = useState(false);
+    const [dashboardFilters, setDashboardFilters] = useState<any[]>([]);
+
+    // PHASE 3 STATE
+    const [dashboardVariations, setDashboardVariations] = useState<DashboardVariation[]>([]);
+    const [selectedVariationIndex, setSelectedVariationIndex] = useState(0);
+    const [isGeneratingVariations, setIsGeneratingVariations] = useState(false);
+    const [showImprovementDialog, setShowImprovementDialog] = useState(false);
+    const [improvingChartId, setImprovingChartId] = useState<string | null>(null);
+    const [historyVersion, setHistoryVersion] = useState(0); // Force re-render for history
+    const [showVariations, setShowVariations] = useState(false);
+    const [showHistory, setShowHistory] = useState(false);
 
     // Load session on component mount
     useEffect(() => {
@@ -70,8 +98,19 @@ export default function DashboardPage() {
                     setProcessedData(session.processedData);
                     setColumnMapping(session.columnMapping);
                     setChartSuggestion(session.chartSuggestion || null);
+                    setDashboardConfig(session.dashboardConfig || null);
                     setAlertRules(session.alertRules);
                     setSelectedSheet(session.selectedSheet || '');
+
+                    // PHASE 3: Restore variations and history
+                    if (session.dashboardVariations) {
+                        setDashboardVariations(session.dashboardVariations);
+                        setSelectedVariationIndex(session.selectedVariationIndex || 0);
+                    }
+                    if (session.improvementHistory) {
+                        improvementHistory.fromJSON(JSON.stringify(session.improvementHistory));
+                        setHistoryVersion(v => v + 1);
+                    }
 
                     // Process data if available
                     if (session.processedData.length > 0) {
@@ -115,8 +154,13 @@ export default function DashboardPage() {
                     processedData,
                     columnMapping,
                     chartSuggestion: chartSuggestion || undefined,
+                    dashboardConfig: dashboardConfig || undefined,
                     alertRules,
                     selectedSheet: selectedSheet || undefined,
+                    // PHASE 3: Save variations and history
+                    dashboardVariations: dashboardVariations.length > 0 ? dashboardVariations : undefined,
+                    selectedVariationIndex: dashboardVariations.length > 0 ? selectedVariationIndex : undefined,
+                    improvementHistory: improvementHistory.getAll(),
                     lastUpdated: new Date().toISOString()
                 };
 
@@ -129,7 +173,7 @@ export default function DashboardPage() {
         // Debounce saves to avoid excessive writes
         const timeoutId = setTimeout(saveSession, 1000);
         return () => clearTimeout(timeoutId);
-    }, [rawData, processedData, columnMapping, chartSuggestion, alertRules, selectedSheet, currentSessionId, sessionLoaded]);
+    }, [rawData, processedData, columnMapping, chartSuggestion, dashboardConfig, alertRules, selectedSheet, currentSessionId, sessionLoaded, dashboardVariations, selectedVariationIndex, historyVersion]);
 
     const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -224,6 +268,122 @@ export default function DashboardPage() {
         }
     };
 
+    const handleGenerateDashboard = async () => {
+        if (processedData.length === 0) {
+            toast.error('No data to visualize');
+            return;
+        }
+
+        setIsLoadingSuggestion(true);
+        const loadingToast = toast.loading('Generating AI-powered dashboard...');
+
+        try {
+            // Get API key from localStorage
+            const apiKey = localStorage.getItem('gemini-api-key') || '';
+
+            let config: DashboardConfig;
+
+            if (apiKey) {
+                // Try AI-powered generation
+                try {
+                    config = await generateDashboardWithAI(
+                        processedData,
+                        columnMapping,
+                        apiKey
+                    );
+
+                    // Validate fields exist in dataset
+                    const availableFields = Object.keys(columnMapping);
+                    const validation = validateDashboardFields(config, availableFields);
+
+                    if (!validation.isValid) {
+                        console.warn('AI suggested invalid fields:', validation.errors);
+                        toast.dismiss(loadingToast);
+                        toast.warning('AI suggested some invalid fields. Using fallback.');
+
+                        // Fall back to basic generator
+                        config = await generateBasicDashboard(processedData, columnMapping);
+                    } else {
+                        toast.dismiss(loadingToast);
+                        toast.success('AI dashboard generated successfully!');
+                    }
+                } catch (aiError) {
+                    console.error('AI generation failed:', aiError);
+                    toast.dismiss(loadingToast);
+                    toast.warning('AI generation failed. Using basic generator.');
+
+                    // Fall back to basic generator
+                    config = await generateBasicDashboard(processedData, columnMapping);
+                }
+            } else {
+                // No API key, use basic generator
+                toast.dismiss(loadingToast);
+                toast.info('Configure Gemini API key in Settings for AI-powered dashboards');
+                config = await generateBasicDashboard(processedData, columnMapping);
+            }
+
+            setDashboardConfig(config);
+
+            // Generate filters from data
+            const filters = generateFiltersFromData(processedData, columnMapping);
+            setDashboardFilters(filters);
+        } catch (error) {
+            console.error('Dashboard generation error:', error);
+            toast.dismiss(loadingToast);
+            toast.error('Failed to generate dashboard');
+        } finally {
+            setIsLoadingSuggestion(false);
+        }
+    };
+
+    const handleChartTypeChange = (chartId: string, newType: DashboardChartType) => {
+        if (!dashboardConfig) return;
+
+        const updatedConfig: DashboardConfig = {
+            ...dashboardConfig,
+            charts: dashboardConfig.charts.map(chart =>
+                chart.id === chartId
+                    ? { ...chart, type: newType }
+                    : chart
+            ),
+            updatedAt: new Date().toISOString(),
+        };
+
+        setDashboardConfig(updatedConfig);
+        toast.success(`Chart type changed to ${newType}`);
+    };
+
+    const handleAddKPI = (kpi: KPIConfig) => {
+        if (!dashboardConfig) return;
+
+        const updatedConfig: DashboardConfig = {
+            ...dashboardConfig,
+            kpis: [...dashboardConfig.kpis, kpi],
+            updatedAt: new Date().toISOString(),
+        };
+
+        // Add KPI to layout (first row if exists, or create new row)
+        if (updatedConfig.layout.rows.length > 0) {
+            const firstRow = updatedConfig.layout.rows[0];
+            firstRow.widgets.push(kpi.id);
+            firstRow.span.push(kpi.span || 6);
+        } else {
+            updatedConfig.layout.rows.push({
+                id: crypto.randomUUID(),
+                widgets: [kpi.id],
+                span: [kpi.span || 6],
+            });
+        }
+
+        setDashboardConfig(updatedConfig);
+        toast.success('KPI added successfully!');
+    };
+
+    const handleLayoutChange = (newConfig: DashboardConfig) => {
+        setDashboardConfig(newConfig);
+        toast.success('Layout updated');
+    };
+
     const handleAddAlert = (rule: AlertRule) => {
         const newRules = [...alertRules, rule];
         setAlertRules(newRules);
@@ -249,7 +409,7 @@ export default function DashboardPage() {
     const handleFileSelect = async (file: File) => {
         setUploadStatus('Uploading and parsing...');
         toast.loading('Processing file...');
-        
+
         const formData = new FormData();
         formData.append('file', file);
 
@@ -279,6 +439,129 @@ export default function DashboardPage() {
         }
     };
 
+    // PHASE 3 HANDLERS
+
+    // P9: Dashboard Variations Handlers
+    const handleGenerateVariations = async () => {
+        if (processedData.length === 0) {
+            toast.error('No data available to generate variations');
+            return;
+        }
+
+        const apiKey = localStorage.getItem('gemini-api-key') || '';
+        if (!apiKey) {
+            toast.error('Please set your Gemini API key in Settings to generate variations');
+            return;
+        }
+
+        setIsGeneratingVariations(true);
+        const loadingToast = toast.loading('Generating 3 dashboard variations...');
+
+        try {
+            const variations = await generateDashboardVariations(
+                processedData,
+                columnMapping,
+                apiKey
+            );
+
+            setDashboardVariations(variations);
+            setSelectedVariationIndex(0);
+            setShowVariations(true);
+            toast.dismiss(loadingToast);
+            toast.success(`Generated ${variations.length} dashboard variations!`);
+        } catch (error) {
+            console.error('Variation generation failed:', error);
+            toast.dismiss(loadingToast);
+            const errorMessage = error instanceof Error ? error.message : 'Failed to generate variations';
+            toast.error(errorMessage);
+        } finally {
+            setIsGeneratingVariations(false);
+        }
+    };
+
+    const handleApplyVariation = (variation: DashboardVariation) => {
+        setDashboardConfig(variation.config);
+        setShowVariations(false);
+        toast.success(`Applied ${variation.strategy} dashboard layout!`);
+    };
+
+    const handleRegenerateVariations = () => {
+        handleGenerateVariations();
+    };
+
+    // P10: Chart Improvement Handlers
+    const handleImproveChart = (chartId: string) => {
+        setImprovingChartId(chartId);
+        setShowImprovementDialog(true);
+    };
+
+    const handleChartImproved = (
+        updatedConfig: any,
+        changes: string[],
+        reasoning: string
+    ) => {
+        if (!dashboardConfig || !improvingChartId) return;
+
+        // Find old chart
+        const oldChart = dashboardConfig.charts.find(c => c.id === improvingChartId);
+        if (!oldChart) {
+            toast.error('Chart not found');
+            return;
+        }
+
+        // Add to history
+        improvementHistory.add({
+            chartId: improvingChartId,
+            userRequest: 'User improvement request', // This will be set from dialog
+            beforeConfig: oldChart,
+            afterConfig: updatedConfig,
+            changes,
+            reasoning,
+        });
+
+        // Update dashboard config
+        const newConfig: DashboardConfig = {
+            ...dashboardConfig,
+            charts: dashboardConfig.charts.map(c =>
+                c.id === improvingChartId ? updatedConfig : c
+            ),
+            updatedAt: new Date().toISOString(),
+        };
+
+        setDashboardConfig(newConfig);
+        setHistoryVersion(v => v + 1);
+        setShowImprovementDialog(false);
+        setImprovingChartId(null);
+    };
+
+    const handleUndoImprovement = (record: ImprovementRecord) => {
+        if (!dashboardConfig) return;
+
+        const undoneConfig = improvementHistory.undo(record.id);
+        if (!undoneConfig) {
+            toast.error('Cannot undo improvement');
+            return;
+        }
+
+        // Update dashboard config
+        const newConfig: DashboardConfig = {
+            ...dashboardConfig,
+            charts: dashboardConfig.charts.map(c =>
+                c.id === record.chartId ? undoneConfig : c
+            ),
+            updatedAt: new Date().toISOString(),
+        };
+
+        setDashboardConfig(newConfig);
+        setHistoryVersion(v => v + 1);
+    };
+
+    const handleClearHistory = () => {
+        improvementHistory.clear();
+        setHistoryVersion(v => v + 1);
+        toast.success('History cleared');
+    };
+
     return (
         <div className="min-h-screen bg-background">
             {/* Header */}
@@ -296,6 +579,12 @@ export default function DashboardPage() {
                         </div>
                     </div>
                     <div className="flex items-center gap-2">
+                        <Link href="/library">
+                            <Button variant="outline" size="sm">
+                                <FolderOpen className="h-4 w-4 mr-2" />
+                                Library
+                            </Button>
+                        </Link>
                         <SettingsDialog />
                         <ThemeToggle />
                     </div>
@@ -380,11 +669,22 @@ export default function DashboardPage() {
                                 <Alert>
                                     <Sparkles className="h-4 w-4" />
                                     <AlertDescription>
-                                        <div className="space-y-1">
+                                        <div className="space-y-2">
                                             <p className="font-semibold">AI Suggestion:</p>
-                                            <p>Chart Type: <Badge variant="secondary">{chartSuggestion.chartType}</Badge></p>
-                                            <p>X-Axis: <Badge variant="outline">{chartSuggestion.xKey}</Badge></p>
-                                            <p>Y-Axis: <Badge variant="outline">{chartSuggestion.yKey}</Badge></p>
+                                            <div className="space-y-1">
+                                                <div className="flex items-center gap-2">
+                                                    <span className="text-sm">Chart Type:</span>
+                                                    <Badge variant="secondary">{chartSuggestion.chartType}</Badge>
+                                                </div>
+                                                <div className="flex items-center gap-2">
+                                                    <span className="text-sm">X-Axis:</span>
+                                                    <Badge variant="outline">{chartSuggestion.xKey}</Badge>
+                                                </div>
+                                                <div className="flex items-center gap-2">
+                                                    <span className="text-sm">Y-Axis:</span>
+                                                    <Badge variant="outline">{chartSuggestion.yKey}</Badge>
+                                                </div>
+                                            </div>
                                             {chartSuggestion.reasoning && (
                                                 <p className="text-sm text-muted-foreground mt-2">{chartSuggestion.reasoning}</p>
                                             )}
@@ -400,46 +700,171 @@ export default function DashboardPage() {
                 {processedData.length > 0 && (
                     <Card variant="glass" hoverable>
                         <CardHeader>
-                            <CardTitle className="flex items-center gap-2">
-                                <BarChart3 className="h-5 w-5" />
-                                Step 3: Dashboard Visualization
-                            </CardTitle>
-                            <CardDescription>
-                                View your data insights and key metrics
-                            </CardDescription>
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <CardTitle className="flex items-center gap-2">
+                                        <BarChart3 className="h-5 w-5" />
+                                        Step 3: Dashboard Visualization
+                                    </CardTitle>
+                                    <CardDescription>
+                                        View your data insights and key metrics
+                                    </CardDescription>
+                                </div>
+                                <div className="flex gap-2 flex-wrap">
+                                    {dashboardConfig && (
+                                        <>
+                                            <Button
+                                                variant="outline"
+                                                onClick={() => setIsEditMode(!isEditMode)}
+                                            >
+                                                {isEditMode ? (
+                                                    <>
+                                                        <Save className="mr-2 h-4 w-4" />
+                                                        Save Layout
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <Edit className="mr-2 h-4 w-4" />
+                                                        Edit Layout
+                                                    </>
+                                                )}
+                                            </Button>
+                                            <Button
+                                                variant="outline"
+                                                onClick={() => setShowKPIBuilder(true)}
+                                            >
+                                                <Plus className="mr-2 h-4 w-4" />
+                                                Add KPI
+                                            </Button>
+                                            <Button
+                                                variant="outline"
+                                                onClick={() => setShowHistory(!showHistory)}
+                                            >
+                                                <History className="mr-2 h-4 w-4" />
+                                                History
+                                            </Button>
+                                        </>
+                                    )}
+                                    <Button
+                                        onClick={handleGenerateDashboard}
+                                        disabled={isLoadingSuggestion || isGeneratingVariations}
+                                    >
+                                        {isLoadingSuggestion ? (
+                                            <>
+                                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                                Generating...
+                                            </>
+                                        ) : (
+                                            <>
+                                                <Sparkles className="mr-2 h-4 w-4" />
+                                                Generate Dashboard
+                                            </>
+                                        )}
+                                    </Button>
+                                    <Button
+                                        onClick={handleGenerateVariations}
+                                        disabled={isLoadingSuggestion || isGeneratingVariations}
+                                        variant="secondary"
+                                    >
+                                        {isGeneratingVariations ? (
+                                            <>
+                                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                                Generating...
+                                            </>
+                                        ) : (
+                                            <>
+                                                <Wand2 className="mr-2 h-4 w-4" />
+                                                Generate Variations
+                                            </>
+                                        )}
+                                    </Button>
+                                </div>
+                            </div>
                         </CardHeader>
-                        <CardContent>
-                            <DashboardGrid>
-                                {chartSuggestion && (
-                                    <ChartWidget
+                        <CardContent className="space-y-6">
+                            {/* PHASE 3: Dashboard Variations Carousel */}
+                            {showVariations && dashboardVariations.length > 0 && (
+                                <DashboardVariationsCarousel
+                                    variations={dashboardVariations}
+                                    selectedIndex={selectedVariationIndex}
+                                    onSelect={setSelectedVariationIndex}
+                                    onApply={handleApplyVariation}
+                                    onRegenerate={handleRegenerateVariations}
+                                    isRegenerating={isGeneratingVariations}
+                                />
+                            )}
+
+                            {dashboardConfig ? (
+                                <>
+                                    {/* Add Improve Chart button on each chart */}
+                                    {selectedChartId && dashboardConfig.charts.find(c => c.id === selectedChartId) && (
+                                        <div className="flex gap-2 mb-4">
+                                            <Button
+                                                onClick={() => handleImproveChart(selectedChartId)}
+                                                variant="outline"
+                                                size="sm"
+                                            >
+                                                <Wand2 className="mr-2 h-4 w-4" />
+                                                Improve Selected Chart
+                                            </Button>
+                                        </div>
+                                    )}
+
+                                    <DashboardCanvas
+                                        config={dashboardConfig}
                                         data={processedData}
-                                        xKey={chartSuggestion.xKey}
-                                        yKey={chartSuggestion.yKey}
-                                        title={`${chartSuggestion.yKey} over ${chartSuggestion.xKey}`}
+                                        selectedChartId={selectedChartId}
+                                        onChartSelect={setSelectedChartId}
+                                        onChartTypeChange={handleChartTypeChange}
+                                        onLayoutChange={handleLayoutChange}
+                                        editMode={isEditMode}
+                                        filters={dashboardFilters}
                                     />
-                                )}
 
-                                {/* KPI Cards */}
-                                <Card variant="glass" hoverable>
-                                    <CardHeader className="pb-3">
-                                        <CardTitle className="text-sm font-medium">Total Records</CardTitle>
-                                    </CardHeader>
-                                    <CardContent>
-                                        <div className="text-3xl font-bold">{processedData.length}</div>
+                                    {/* PHASE 3: Improvement History Panel */}
+                                    {showHistory && (
+                                        <div className="mt-6">
+                                            <ImprovementHistoryPanel
+                                                history={improvementHistory}
+                                                onUndo={handleUndoImprovement}
+                                                onClear={handleClearHistory}
+                                                selectedChartId={selectedChartId}
+                                            />
+                                        </div>
+                                    )}
+                                </>
+                            ) : (
+                                <Card variant="glass">
+                                    <CardContent className="pt-6 text-center">
+                                        <p className="text-muted-foreground">
+                                            Click "Generate Dashboard" to create visualizations
+                                        </p>
                                     </CardContent>
                                 </Card>
-
-                                <Card variant="glass" hoverable>
-                                    <CardHeader className="pb-3">
-                                        <CardTitle className="text-sm font-medium">Columns</CardTitle>
-                                    </CardHeader>
-                                    <CardContent>
-                                        <div className="text-3xl font-bold">{columns.length}</div>
-                                    </CardContent>
-                                </Card>
-                            </DashboardGrid>
+                            )}
                         </CardContent>
                     </Card>
+                )}
+
+                {/* KPI Builder Dialog */}
+                <KPIBuilder
+                    open={showKPIBuilder}
+                    onOpenChange={setShowKPIBuilder}
+                    columns={Object.keys(columnMapping)}
+                    onSave={handleAddKPI}
+                />
+
+                {/* PHASE 3: Chart Improvement Dialog */}
+                {improvingChartId && dashboardConfig && (
+                    <ChartImprovementDialog
+                        open={showImprovementDialog}
+                        onOpenChange={setShowImprovementDialog}
+                        chartConfig={dashboardConfig.charts.find(c => c.id === improvingChartId)!}
+                        data={processedData}
+                        availableFields={Object.keys(columnMapping)}
+                        apiKey={localStorage.getItem('gemini-api-key') || ''}
+                        onImprove={handleChartImproved}
+                    />
                 )}
 
                 {/* Alerts Section */}

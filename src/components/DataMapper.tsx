@@ -18,11 +18,11 @@ export default function DataMapper({ columns, onMap }: { columns: string[]; onMa
         <div className="grid gap-3 max-h-96 overflow-y-auto">
             {columns.map((col) => (
                 <div key={col} className="flex items-center gap-3">
-                    <span className="w-40 font-medium text-white truncate" title={col}>{col}</span>
+                    <span className="w-40 font-medium text-foreground truncate" title={col}>{col}</span>
                     <select
                         value={mapping[col] || ''}
                         onChange={(e) => handleChange(col, e.target.value as any)}
-                        className="bg-white/10 text-white border border-white/20 rounded px-3 py-2 flex-1"
+                        className="bg-muted text-foreground border border-border rounded px-3 py-2 flex-1 focus-ring"
                     >
                         <option value="" disabled>Select type</option>
                         <option value="string">String</option>

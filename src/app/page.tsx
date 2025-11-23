@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { SettingsDialog } from '@/components/SettingsDialog';
-import { BarChart3, FileSpreadsheet, Sparkles, Bell, ArrowRight } from 'lucide-react';
+import { BarChart3, FileSpreadsheet, Sparkles, Bell, ArrowRight, FolderOpen } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export default function Home() {
@@ -40,6 +40,12 @@ export default function Home() {
             <span className="text-xl font-bold">Excel-to-Dashboard</span>
           </Link>
           <div className="flex items-center gap-2">
+            <Link href="/library">
+              <Button variant="outline" size="sm">
+                <FolderOpen className="h-4 w-4 mr-2" />
+                Library
+              </Button>
+            </Link>
             <SettingsDialog />
             <ThemeToggle />
           </div>
