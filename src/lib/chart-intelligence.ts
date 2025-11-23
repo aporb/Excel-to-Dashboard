@@ -4,7 +4,11 @@
  * Uses data science approach to understand data characteristics
  */
 
-export type ChartType = 'line' | 'bar' | 'area' | 'pie';
+// Import canonical ChartType from dashboard-types (single source of truth)
+import type { ChartType } from './dashboard-types';
+
+// Re-export for backward compatibility
+export type { ChartType };
 
 export interface DataAnalysis {
   xType: 'date' | 'number' | 'category' | 'unknown';

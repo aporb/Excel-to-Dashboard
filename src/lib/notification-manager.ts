@@ -3,6 +3,8 @@
  * Handles browser notifications for alerts and events
  */
 
+import { STORAGE_KEYS } from './storage-keys';
+
 export interface NotificationOptions {
   title: string;
   body?: string;
@@ -25,7 +27,6 @@ export interface NotificationPreferences {
   requireInteraction: boolean;
 }
 
-const NOTIFICATION_PREFERENCES_KEY = 'notification-preferences';
 const DEFAULT_ICON = '/next.svg';
 
 /**
@@ -252,7 +253,7 @@ export class NotificationManager {
     }
 
     try {
-      const stored = localStorage.getItem(NOTIFICATION_PREFERENCES_KEY);
+      const stored = localStorage.getItem(STORAGE_KEYS.NOTIFICATION_PREFERENCES);
       if (stored) {
         return JSON.parse(stored);
       }
@@ -276,7 +277,7 @@ export class NotificationManager {
     }
 
     try {
-      localStorage.setItem(NOTIFICATION_PREFERENCES_KEY, JSON.stringify(this.preferences));
+      localStorage.setItem(STORAGE_KEYS.NOTIFICATION_PREFERENCES, JSON.stringify(this.preferences));
     } catch (error) {
       console.error('Failed to save notification preferences:', error);
     }

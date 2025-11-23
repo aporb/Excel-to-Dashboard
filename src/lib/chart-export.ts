@@ -5,6 +5,7 @@
 
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
+import { toast } from 'sonner';
 
 export interface ExportOptions {
   filename?: string;
@@ -59,7 +60,9 @@ export async function exportElementAsPNG(
     );
   } catch (error) {
     console.error('PNG export error:', error);
-    throw new Error(`Failed to export PNG: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    toast.error(`PNG export failed: ${errorMessage}`);
+    throw new Error(`Failed to export PNG: ${errorMessage}`);
   }
 }
 
@@ -105,7 +108,9 @@ export async function exportDashboardAsPNG(
     );
   } catch (error) {
     console.error('Dashboard PNG export error:', error);
-    throw new Error(`Failed to export dashboard PNG: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    toast.error(`Dashboard PNG export failed: ${errorMessage}`);
+    throw new Error(`Failed to export dashboard PNG: ${errorMessage}`);
   }
 }
 
@@ -211,7 +216,9 @@ export async function exportDashboardAsPDF(
     pdf.save(`${filename}.pdf`);
   } catch (error) {
     console.error('PDF export error:', error);
-    throw new Error(`Failed to export PDF: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    toast.error(`PDF export failed: ${errorMessage}`);
+    throw new Error(`Failed to export PDF: ${errorMessage}`);
   }
 }
 
@@ -301,7 +308,9 @@ export async function exportChartsAsPDF(
     pdf.save(`${filename}.pdf`);
   } catch (error) {
     console.error('Multi-chart PDF export error:', error);
-    throw new Error(`Failed to export charts PDF: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    toast.error(`Multi-chart PDF export failed: ${errorMessage}`);
+    throw new Error(`Failed to export charts PDF: ${errorMessage}`);
   }
 }
 

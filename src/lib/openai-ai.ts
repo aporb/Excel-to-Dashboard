@@ -1,4 +1,11 @@
 import OpenAI from 'openai';
+import { ChartSuggestion } from './dashboard-types';
+import { toast } from 'sonner';
+
+const VALID_CHART_TYPES = ['line', 'bar', 'pie', 'area'] as const;
+
+// Re-export for backward compatibility
+export type { ChartSuggestion };
 
 // Lazy-load OpenAI client to prevent initialization errors
 let client: OpenAI | null = null;
@@ -6,7 +13,7 @@ let client: OpenAI | null = null;
 function getClient(apiKey?: string): OpenAI | null {
   const key = apiKey || process.env.OPENAI_API_KEY;
   if (!key) return null;
-  
+
   if (!client) {
     client = new OpenAI({
       apiKey: key,
@@ -16,13 +23,21 @@ function getClient(apiKey?: string): OpenAI | null {
   return client;
 }
 
-export interface ChartSuggestion {
-  chartType: 'line' | 'bar' | 'pie' | 'area';
-  xKey: string;
-  yKey: string;
-  reasoning?: string;
-}
-
+/**
+ * @deprecated This function is from the old single-chart generation system (Method 1).
+ *
+ * MIGRATION PATH:
+ * - Old: suggestChart() → returns ChartSuggestion (single chart)
+ * - New: generateDashboard() → returns DashboardConfig (multiple charts + KPIs)
+ *
+ * This function is kept for backward compatibility with old sessions.
+ * The project now uses Gemini AI by default, but OpenAI support is maintained
+ * for users who prefer it.
+ *
+ * NEW CODE: Use generateDashboard() from /src/lib/dashboard-generator.ts
+ *
+ * @see /src/lib/dashboard-generator.ts for the unified approach
+ */
 export async function suggestChart(
   dataSample: Record<string, any>[],
   apiKey?: string
@@ -45,6 +60,14 @@ export async function suggestChart(
 
 Sample data:
 ${sample}
+
+CRITICAL: The chartType field MUST be exactly one of these four strings:
+- "line"
+- "bar"
+- "pie"
+- "area"
+
+DO NOT use: "table", "scatter", "heatmap", "histogram", or any other type.
 
 Respond ONLY with a valid JSON object in this exact format:
 {
@@ -69,9 +92,37 @@ Respond ONLY with a valid JSON object in this exact format:
     const jsonText = jsonMatch ? jsonMatch[1] : text;
 
     const parsed = JSON.parse(jsonText);
+
+    // VALIDATE CHART TYPE
+    if (!VALID_CHART_TYPES.includes(parsed.chartType)) {
+      console.warn(`Invalid chart type from AI: ${parsed.chartType}, using fallback`);
+
+      // Fallback to intelligent selection
+      const ChartIntelligence = await import('./chart-intelligence');
+      const fallback = ChartIntelligence.ChartIntelligence.selectBestChart(dataSample, Object.keys(dataSample[0] || {}));
+      parsed.chartType = fallback;
+      parsed.reasoning = `AI suggested invalid type "${parsed.chartType}", using data analysis fallback: ${fallback}`;
+    }
+
     return parsed as ChartSuggestion;
   } catch (error) {
     console.error('OpenAI API error:', error);
+
+    // User-friendly error messages
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+
+    if (errorMessage.includes('API key') || errorMessage.includes('401')) {
+      toast.error('Invalid OpenAI API key. Please check Settings.');
+    } else if (errorMessage.includes('quota') || errorMessage.includes('429')) {
+      toast.error('API quota exceeded. Please try again later.');
+    } else if (errorMessage.includes('network') || errorMessage.includes('fetch')) {
+      toast.error('Network error. Please check your connection.');
+    } else if (errorMessage.includes('rate limit')) {
+      toast.error('Rate limit reached. Please wait a moment and try again.');
+    } else {
+      toast.error('AI generation failed. Using fallback visualization.');
+    }
+
     // Fallback suggestion
     const keys = Object.keys(dataSample[0] || {});
     return {

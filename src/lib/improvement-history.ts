@@ -1,4 +1,5 @@
 import { ChartConfig } from './dashboard-types';
+import { getImprovementHistoryKey } from './storage-keys';
 
 /**
  * Improvement History Tracker
@@ -154,7 +155,7 @@ export class ImprovementHistory {
    */
   loadFromStorage(sessionId: string): void {
     try {
-      const key = `improvement-history-${sessionId}`;
+      const key = getImprovementHistoryKey(sessionId);
       const stored = localStorage.getItem(key);
       if (stored) {
         this.fromJSON(stored);
@@ -169,7 +170,7 @@ export class ImprovementHistory {
    */
   saveToStorage(sessionId: string): void {
     try {
-      const key = `improvement-history-${sessionId}`;
+      const key = getImprovementHistoryKey(sessionId);
       localStorage.setItem(key, this.toJSON());
     } catch (error) {
       console.error('Failed to save history to storage:', error);

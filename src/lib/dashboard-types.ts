@@ -1,10 +1,34 @@
 import { z } from 'zod';
 
 // ============================================================================
+// AI CHART SUGGESTION (Provider-agnostic)
+// ============================================================================
+// @deprecated This interface is from the old single-chart generation system.
+//
+// MIGRATION PATH:
+// - Old System (Method 1): Used ChartSuggestion via suggestChart()
+// - New System (Method 2/3): Uses DashboardConfig via generateDashboard()
+//
+// This is kept for backward compatibility with old sessions that used
+// the single-chart suggestion format. New code should use DashboardConfig.
+//
+// See: /src/lib/dashboard-generator.ts for the unified approach
+// ============================================================================
+
+export interface ChartSuggestion {
+  chartType: 'line' | 'bar' | 'pie' | 'area';
+  xKey: string;
+  yKey: string;
+  reasoning?: string;
+}
+
+// ============================================================================
 // CHART CONFIGURATION
 // ============================================================================
 
-export const ChartTypeSchema = z.enum(['line', 'bar', 'area', 'pie', 'scatter', 'table']);
+// Canonical ChartType definition - matches implemented chart components
+// Only include types that have corresponding widget implementations in src/components/charts/
+export const ChartTypeSchema = z.enum(['line', 'bar', 'area', 'pie']);
 export type ChartType = z.infer<typeof ChartTypeSchema>;
 
 export interface ChartConfig {
